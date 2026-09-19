@@ -33,7 +33,7 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// Keys: arrows slide the ground, + and - zoom, z resets the view; r, m and space pick the order.
+// Keys: arrows slide the ground, + and - zoom, z resets the view; o flips the order; space plays and pauses the reading.
 const resetBtn = $('reset');
 resetBtn.addEventListener('click', () => controls.goHome());
 const help = $('help'), helpBtn = $('help-btn');
@@ -187,6 +187,8 @@ $('search').addEventListener('submit', (e) => { e.preventDefault(); const q = qI
 let typing = 0; // the search runs as you type, a beat after the last key
 qInput.addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(() => { const q = qInput.value.trim(); if (q.length >= 2) { if (q !== query) runSearch(q); } else if (query) clearSearch(); }, 220); });
 clearBtn.addEventListener('click', clearSearch);
+document.addEventListener('pointerdown', (e) => { if (!e.target.closest('#search, #results')) results.hidden = true; });
+qInput.addEventListener('focus', () => { if (query) results.hidden = false; });
 qInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') { clearSearch(); qInput.blur(); } e.stopPropagation(); });
 
 // Panels: about and keys, one at a time.
@@ -281,7 +283,7 @@ function applyReading() {
 function setPlaying(on) { reading.playing = on; playBtn.setAttribute('aria-pressed', on); }
 playBtn.addEventListener('click', () => setPlaying(!reading.playing));
 posInput.addEventListener('input', () => { reading.pos = posInput.value / 1000; setPlaying(false); applyReading(); });
-document.addEventListener('keydown', (ev) => { if (!ev.metaKey && !ev.ctrlKey && !ev.altKey && ev.target !== qInput && ev.key === 'p') setPlaying(!reading.playing); });
+document.addEventListener('keydown', (ev) => { if (!ev.metaKey && !ev.ctrlKey && !ev.altKey && ev.target !== qInput && (ev.key === ' ' || ev.key === 'p')) { setPlaying(!reading.playing); ev.preventDefault(); } });
 
 // The morph: 0 is reading order (each book a band), 1 is meaning (the terrain). It plays on load and on the toggle.
 const order = { value: 1, target: 1, from: 1, t0: 0, seconds: 3, wait: 0 };
@@ -293,9 +295,7 @@ function syncOrderButtons() { for (const b of document.querySelectorAll('#order 
 document.querySelectorAll('#order button').forEach((b) => b.addEventListener('click', () => setOrder(b.dataset.order === 'meaning')));
 document.addEventListener('keydown', (ev) => {
   if (ev.metaKey || ev.ctrlKey || ev.altKey || ev.target === qInput) return;
-  if (ev.key === ' ') { setOrder(order.target !== 1); ev.preventDefault(); }
-  else if (ev.key === 'r') setOrder(false);
-  else if (ev.key === 'm') setOrder(true);
+  if (ev.key === 'o') setOrder(order.target !== 1);
 });
 function applyOrder(m) {
   order.value = m;
