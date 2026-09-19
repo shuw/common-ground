@@ -12,6 +12,7 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
 #legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 #legend b { font-weight: 400; color: var(--faint); }
 #card { position: fixed; right: 16px; top: calc(58px + env(safe-area-inset-top, 0px)); width: min(380px, calc(100% - 32px)); display: grid; gap: 6px; user-select: text; -webkit-user-select: text; max-height: calc(100vh - 120px); overflow-y: auto; scrollbar-width: none; }
+#card[hidden] { display: none; }
 #card .main { padding: 14px 18px; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--c, var(--accent)); border-radius: 10px; }
 #card .kins { display: grid; gap: 5px; padding-left: 16px; position: relative; }
 #card .kins::before { content: ""; position: absolute; left: 6px; top: 0; bottom: 10px; border-left: 1px solid var(--line); }
