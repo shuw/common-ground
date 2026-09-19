@@ -337,8 +337,8 @@ function frame() {
   // a verse is picked once the pointer has rested on it a moment, and let go the same way, so neighbours do not flicker
   // a verse shows once the pointer has rested on it a moment; letting go waits a little longer, and never while the card is under the pointer or a verse is held
   if (candidate.i !== shown && !overCard) {
-    if (candidate.i >= 0 && now - candidate.since > 0.07) { held = false; showVerse(candidate.i); }
-    else if (candidate.i < 0 && !held && now - candidate.since > 0.15) letGo();
+    if (candidate.i >= 0 && now - candidate.since > 0.04) { held = false; showVerse(candidate.i); }
+    else if (candidate.i < 0 && !held && now - candidate.since > 0.12) letGo();
   }
   if (shown >= 0 && kin) threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt);
   else threads.hide();

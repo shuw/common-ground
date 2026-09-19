@@ -66,7 +66,7 @@ export class ThreadsLayer {
   /** Draw arcs from verse i to each verse in kin (skipping -1), positions from positionOf, colours per kin;
    *  t is the seconds since the verse was picked: the arcs grow out of it, one a little after the other. */
   show(i, kin, colours, colour, positionOf, t) {
-    const progress = Math.min(1, t / 0.22), mp = this.marks.geometry.getAttribute('position'), mc = this.marks.geometry.getAttribute('color'), mb = this.marks.geometry.getAttribute('aBig');
+    const progress = Math.min(1, t / 0.16), mp = this.marks.geometry.getAttribute('position'), mc = this.marks.geometry.getAttribute('color'), mb = this.marks.geometry.getAttribute('aBig');
     positionOf(i, this.a); this.c.set(colour);
     mp.setXYZ(0, this.a.x, this.a.y + 0.01, this.a.z); mc.setXYZ(0, this.c.r, this.c.g, this.c.b); mb.setX(0, 1);
     let k = 0, n = 0, m = 1;
@@ -87,8 +87,8 @@ export class ThreadsLayer {
     if (k > 0) { this.geo.setPositions(this.buf.subarray(0, k)); this.geo.setColors(this.cbuf.subarray(0, k)); }
     this.group.children[0].visible = this.group.children[1].visible = k > 0;
     this.marks.geometry.setDrawRange(0, m); mp.needsUpdate = true; mc.needsUpdate = true; mb.needsUpdate = true;
-    this.markMaterial.uniforms.uT.value = Math.min(1, t / 0.4);
-    const pt = t / 0.4;
+    this.markMaterial.uniforms.uT.value = Math.min(1, t / 0.3);
+    const pt = t / 0.3;
     if (pt < 1) { this.pulse.geometry.getAttribute('position').setXYZ(0, this.a.x, this.a.y + 0.01, this.a.z); this.pulse.geometry.getAttribute('position').needsUpdate = true; this.pulseMaterial.uniforms.uT.value = pt; this.pulseMaterial.uniforms.uColor.value.set(colour); }
     this.pulse.visible = pt < 1;
     this.group.visible = true;
