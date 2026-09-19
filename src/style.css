@@ -1,4 +1,4 @@
-:root { color-scheme: dark; --ink: #0f1316; --panel: rgba(18, 23, 28, 0.9); --line: rgba(232, 226, 214, 0.14); --bone: #e8e2d6; --dim: #a39d92; --faint: #6e6960; --accent: #d7b46a;
+:root { color-scheme: dark; --ink: #0f1316; --panel: rgba(18, 23, 28, 0.985); --line: rgba(232, 226, 214, 0.14); --bone: #e8e2d6; --dim: #a39d92; --faint: #6e6960; --accent: #d7b46a;
   --serif: "Cormorant Garamond", "Iowan Old Style", Georgia, serif; --sans: "Source Sans 3", "Helvetica Neue", Arial, sans-serif; --mono: "IBM Plex Mono", Menlo, Consolas, monospace; }
 html, body { height: 100%; }
 body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(--sans); font-size: 14px; line-height: 1.45; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; }
@@ -12,7 +12,7 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
 #legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 #legend b { font-weight: 400; color: var(--faint); }
 #card { position: fixed; right: 16px; top: calc(58px + env(safe-area-inset-top, 0px)); width: min(380px, calc(100% - 32px)); padding: 14px 18px; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--c, var(--accent)); border-radius: 10px; pointer-events: none; }
-#card.pinned { pointer-events: auto; user-select: text; -webkit-user-select: text; }
+#card.pinned { pointer-events: auto; user-select: text; -webkit-user-select: text; max-height: calc(100vh - 120px); overflow-y: auto; }
 #card .who { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c, var(--accent)); }
 #card .verse { font-family: var(--serif); font-size: 21px; line-height: 1.3; margin: 6px 0 4px; }
 #card .tr { font-family: var(--mono); font-size: 10.5px; color: var(--faint); }
@@ -45,3 +45,55 @@ kbd { font-family: var(--mono); font-size: 10px; line-height: 1; padding: 2px 5p
 #kinship output { grid-column: 2; font-family: var(--mono); font-size: 10.5px; color: var(--faint); line-height: 1; }
 #kinship input { width: 200px; margin: 0; accent-color: var(--accent); cursor: pointer; }
 @media (max-width: 640px) { #kinship { left: 12px; right: 12px; transform: none; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); grid-template-columns: auto 1fr; } #kinship input { width: 100%; } }
+#card .tr a { color: var(--dim); text-decoration: none; border-bottom: 1px solid var(--line); }
+#card .tr a:hover { color: var(--bone); }
+#card .more button { font: inherit; background: none; border: 0; color: inherit; padding: 0; cursor: pointer; text-align: left; }
+#card .around { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; font-family: var(--serif); font-size: 14px; }
+#card .around button { color: var(--dim); }
+#card .around button:hover { color: var(--bone); }
+#card .kinhead { margin: 12px 0 4px; padding-top: 10px; border-top: 1px solid var(--line); font-family: var(--mono); font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+#card .kin { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+#card .kin li { border-left: 2px solid var(--c); padding-left: 8px; }
+#card .kin button { display: block; width: 100%; }
+#card .kin button:hover span { color: var(--bone); }
+#card .kin b { font-weight: 400; font-family: var(--mono); font-size: 10.5px; color: var(--c); letter-spacing: 0.04em; }
+#card .kin i { font-style: normal; font-family: var(--mono); font-size: 10px; color: var(--faint); margin-left: 4px; }
+#card .kin span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--dim); font-family: var(--serif); font-size: 15px; line-height: 1.25; }
+#search { position: fixed; left: 50%; top: calc(16px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(460px, calc(100% - 32px)); display: flex; z-index: 3; }
+#search input { flex: 1; font: inherit; font-family: var(--serif); font-size: 16px; padding: 7px 34px 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--bone); outline: none; -webkit-appearance: none; }
+#search input::placeholder { color: var(--faint); font-style: italic; }
+#search input:focus { border-color: var(--accent); }
+#search input::-webkit-search-cancel-button { display: none; }
+#search #clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 24px; height: 24px; border-radius: 50%; border: 0; background: none; color: var(--dim); font-size: 18px; line-height: 1; cursor: pointer; }
+#search #clear:hover { color: var(--bone); }
+#results { position: fixed; left: 50%; top: calc(58px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); width: min(460px, calc(100% - 32px)); max-height: calc(100vh - 140px); overflow-y: auto; padding: 10px 14px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; z-index: 3; }
+#results .how { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); margin-bottom: 6px; }
+#results .how b { font-weight: 400; color: var(--accent); }
+#results ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+#results li { border-left: 2px solid var(--c); padding-left: 8px; }
+#results button { font: inherit; background: none; border: 0; color: inherit; padding: 0; cursor: pointer; text-align: left; display: block; width: 100%; }
+#results b { font-weight: 400; font-family: var(--mono); font-size: 10.5px; color: var(--c); letter-spacing: 0.04em; }
+#results span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; color: var(--dim); font-family: var(--serif); font-size: 15px; line-height: 1.25; }
+#results button:hover span { color: var(--bone); }
+#results .bar { height: 2px; margin-top: 8px; background: var(--line); border-radius: 1px; overflow: hidden; }
+#results .bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width 0.3s; }
+#about { position: fixed; right: 16px; top: calc(58px + env(safe-area-inset-top, 0px)); width: min(420px, calc(100% - 32px)); max-height: calc(100vh - 100px); overflow-y: auto; padding: 16px 20px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; z-index: 3; user-select: text; -webkit-user-select: text; }
+#about h2 { font-family: var(--serif); font-weight: 500; font-size: 22px; margin: 0 0 8px; }
+#about h3 { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); margin: 16px 0 4px; font-weight: 400; }
+#about p { margin: 0 0 8px; color: var(--dim); font-size: 14px; line-height: 1.5; }
+#about p b { color: var(--bone); font-weight: 400; }
+#about a { color: var(--bone); text-decoration: none; border-bottom: 1px solid var(--line); }
+#about .texts { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13.5px; color: var(--dim); }
+#about .texts i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; }
+#about .texts b { color: var(--bone); font-weight: 400; }
+#about .made { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 12.5px; }
+@media (max-width: 640px) { #search { left: 12px; right: 12px; width: auto; transform: none; top: calc(50px + env(safe-area-inset-top, 0px)); } #results { left: 12px; right: 12px; width: auto; transform: none; top: calc(92px + env(safe-area-inset-top, 0px)); } #about { right: 12px; left: 12px; width: auto; } }
+#labels .region { position: absolute; left: 0; top: 0; font-family: var(--serif); font-style: italic; color: var(--bone); white-space: nowrap; opacity: 0; text-shadow: 0 1px 6px #000, 0 0 12px #000; transition: opacity 0.4s; letter-spacing: 0.01em; }
+#card .tr .link { font: inherit; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 0; color: var(--dim); cursor: pointer; }
+#card .tr .link:hover { color: var(--bone); }
+#labels .landmark { position: absolute; left: 0; top: 0; font: inherit; font-size: 11px; letter-spacing: 0.02em; white-space: nowrap; opacity: 0; padding: 1px 6px 1px 12px; border: 0; border-radius: 3px; background: rgba(15,19,22,0.6); cursor: pointer; transition: opacity 0.25s; }
+#labels .landmark::before { content: ""; position: absolute; left: 3px; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%; background: currentColor; }
+#labels .landmark:hover { background: rgba(15,19,22,0.9); }
+@media (max-width: 640px) { #labels .landmark { font-size: 10px; } }
+#card.enter { animation: card-in 0.22s cubic-bezier(0.2, 0.8, 0.3, 1); }
+@keyframes card-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }

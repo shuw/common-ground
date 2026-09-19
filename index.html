@@ -15,8 +15,21 @@
     <p>Every verse of seven founding texts, placed by what it means.</p>
   </div>
   <div id="labels"></div>
+  <form id="search" role="search"><input id="q" type="search" placeholder="search by meaning: love your enemies, the wind, a father's mercy…" autocomplete="off" spellcheck="false"><button type="button" id="clear" hidden aria-label="Clear search">×</button></form>
+  <div id="results" hidden><div class="how"></div><ul></ul></div>
   <nav id="order" aria-label="Order"><button data-order="reading" aria-pressed="true" title="Each book in reading order">reading order <kbd>r</kbd></button><button data-order="meaning" aria-pressed="false" title="Every verse placed by its meaning">by meaning <kbd>m</kbd></button></nav>
-  <div id="tools"><button id="reset" hidden title="Back to the whole ground">reset view <kbd>h</kbd></button><button id="help-btn" title="Keyboard shortcuts">keys <kbd>?</kbd></button></div>
+  <div id="tools"><button id="reset" hidden title="Back to the whole ground">reset view <kbd>h</kbd></button><button id="about-btn" title="What this is and how it was made">about</button><button id="help-btn" title="Keyboard shortcuts">keys <kbd>?</kbd></button></div>
+  <div id="about" hidden role="dialog" aria-label="About">
+    <h2>Common Ground</h2>
+    <p>Every verse of seven founding texts, placed by what it means. Each verse was read by one multilingual language model and turned into a point in a space where nearby points say similar things; that space was flattened to a map, and the map drawn as ground whose height is how many verses stand there. Where the colours pile up, the traditions say the same thing. A region of one colour is a tradition's own.</p>
+    <h3>What the numbers mean</h3>
+    <p><b>Kinship</b> is the share of a verse's fifteen nearest neighbours that come from other texts, divided by the share a shuffle would give its text, so a small text is not counted as shared just for being small. <b>Nearest in each other text</b> is the closest verse by meaning in each of the six other texts. <b>Search by meaning</b> embeds what you type with the same model, in your browser, and scores every verse against it; the model is fetched once and nothing you type leaves the page.</p>
+    <h3>What to be careful of</h3>
+    <p>These are English translations, so part of the geometry belongs to the translators. The unit of text differs: a Bible verse, a Quranic aya, a stanza of the Gita, a chapter of the Analects. The model is small and the map is one run of a layout algorithm; closeness of meaning is not agreement, and a neighbour is the nearest verse, not a matching one. Treat what you find as a place to start reading, not a conclusion.</p>
+    <h3>The texts</h3>
+    <ul class="texts"></ul>
+    <p class="made">Embeddings by <a href="https://huggingface.co/intfloat/multilingual-e5-small" target="_blank" rel="noopener">multilingual-e5-small</a>, layout by <a href="https://umap-learn.readthedocs.io/" target="_blank" rel="noopener">UMAP</a>, drawn with <a href="https://threejs.org/" target="_blank" rel="noopener">three.js</a>, search in the browser with <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">transformers.js</a>.</p>
+  </div>
   <div id="help" hidden role="dialog" aria-label="Keyboard shortcuts">
     <h2>Keys</h2>
     <dl>
@@ -27,14 +40,15 @@
       <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>zoom in, zoom out</dd>
       <dt><kbd>h</kbd></dt><dd>home: the whole ground</dd>
       <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>less, more kinship</dd>
-      <dt><kbd>esc</kbd></dt><dd>let go of a pinned verse</dd>
+      <dt><kbd>/</kbd></dt><dd>search</dd>
+      <dt><kbd>esc</kbd></dt><dd>let go: a search, a panel, a pinned verse</dd>
       <dt><kbd>?</kbd></dt><dd>this list</dd>
     </dl>
     <p>Drag to slide the ground, scroll or pinch to zoom toward the pointer. Hover a verse to read it, click to keep it.</p>
   </div>
   <div id="kinship"><label for="kin">kinship</label><input id="kin" type="range" min="0" max="1" step="0.01" value="0" title="Dim the verses whose neighbourhood is less shared than this · [ ]"><output id="kin-out" for="kin">every verse</output></div>
   <div id="legend"></div>
-  <div id="card" hidden><div class="who"></div><p class="verse"></p><div class="tr"></div></div>
+  <div id="card" hidden><div class="who"></div><p class="verse"></p><div class="tr"></div><div class="more"></div></div>
   <div id="loading">Common Ground, loading…</div>
   <script type="module" src="/src/main.js"></script>
 </body>

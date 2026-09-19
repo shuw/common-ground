@@ -55,6 +55,7 @@ export class GroundCamera {
     if (snap || !this.touched) { this.goalTarget.set(0, 0, 0); this.goalDistance = distance; if (snap) { this.target.set(0, 0, 0); this.distance = distance; } }
   }
   goHome() { this.goalTarget.set(0, 0, 0); this.goalDistance = this.home.distance; }
+  flyTo(x, z, distance) { this.goalTarget.set(x, 0, z); this.goalDistance = distance; this.clamp(); this.touched = true; }
 
   listen() {
     const c = this.canvas;

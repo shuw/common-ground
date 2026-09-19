@@ -5,13 +5,13 @@ import json, re, os
 
 RAW = 'raw'
 texts = {
-  'torah':    {'name': 'Hebrew Bible', 'lang': 'English', 'translation': 'King James Version, 1611', 'source': 'Project Gutenberg #10', 'licence': 'public domain', 'colour': '#6f7fd0'},
-  'gospels':  {'name': 'Gospels', 'lang': 'English', 'translation': 'King James Version, 1611', 'source': 'Project Gutenberg #10', 'licence': 'public domain', 'colour': '#b85c7a'},
-  'quran':    {'name': 'Quran', 'lang': 'English', 'translation': 'Pickthall, 1930', 'source': 'Tanzil.net', 'licence': 'free with attribution', 'colour': '#3fa7a0'},
-  'gita':     {'name': 'Bhagavad Gita', 'lang': 'English', 'translation': 'Arnold, The Song Celestial, 1885', 'source': 'Project Gutenberg #2388', 'licence': 'public domain', 'colour': '#e0993a'},
-  'dhamma':   {'name': 'Dhammapada', 'lang': 'English', 'translation': 'Müller, 1881', 'source': 'Project Gutenberg #2017', 'licence': 'public domain', 'colour': '#c9a227'},
-  'tao':      {'name': 'Tao Te Ching', 'lang': 'English', 'translation': 'Legge, 1891', 'source': 'Project Gutenberg #216', 'licence': 'public domain', 'colour': '#7fc4a4'},
-  'analects': {'name': 'Analects', 'lang': 'English', 'translation': 'Legge, 1861', 'source': 'Project Gutenberg #4094', 'licence': 'public domain', 'colour': '#5faa8f'},
+  'torah':    {'name': 'Hebrew Bible', 'lang': 'English', 'translation': 'King James Version, 1611', 'source': 'Project Gutenberg #10', 'licence': 'public domain', 'colour': '#6f7fd0', 'url': 'https://www.gutenberg.org/ebooks/10'},
+  'gospels':  {'name': 'Gospels', 'lang': 'English', 'translation': 'King James Version, 1611', 'source': 'Project Gutenberg #10', 'licence': 'public domain', 'colour': '#b85c7a', 'url': 'https://www.gutenberg.org/ebooks/10'},
+  'quran':    {'name': 'Quran', 'lang': 'English', 'translation': 'Pickthall, 1930', 'source': 'Tanzil.net', 'licence': 'free with attribution', 'colour': '#3fa7a0', 'url': 'https://tanzil.net/trans/en.pickthall'},
+  'gita':     {'name': 'Bhagavad Gita', 'lang': 'English', 'translation': 'Arnold, The Song Celestial, 1885', 'source': 'Project Gutenberg #2388', 'licence': 'public domain', 'colour': '#e0993a', 'url': 'https://www.gutenberg.org/ebooks/2388'},
+  'dhamma':   {'name': 'Dhammapada', 'lang': 'English', 'translation': 'Müller, 1881', 'source': 'Project Gutenberg #2017', 'licence': 'public domain', 'colour': '#c9a227', 'url': 'https://www.gutenberg.org/ebooks/2017'},
+  'tao':      {'name': 'Tao Te Ching', 'lang': 'English', 'translation': 'Legge, 1891', 'source': 'Project Gutenberg #216', 'licence': 'public domain', 'colour': '#7fc4a4', 'url': 'https://www.gutenberg.org/ebooks/216'},
+  'analects': {'name': 'Analects', 'lang': 'English', 'translation': 'Legge, 1861', 'source': 'Project Gutenberg #4094', 'licence': 'public domain', 'colour': '#5faa8f', 'url': 'https://www.gutenberg.org/ebooks/4094'},
 }
 verses = []  # [text id, reference, words, original language text where the edition has it]
 book_of = {}  # verse index -> the book, sura or chapter it belongs to, where the reference alone does not say
@@ -118,7 +118,7 @@ def gita():
         p = clean(para)
         m = re.match(r'^CHAPTER ([IVXL]+)$', p)
         if m: ch = roman(m.group(1)); k = 0; continue
-        if not ch or p.startswith('HERE ENDETH') or p.startswith('Entitled') or p.isupper(): continue
+        if not ch or p.startswith('HERE ENDETH') or p.startswith('Entitled') or p.isupper() or p.startswith('[FN#'): continue  # Arnold's footnotes are not stanzas
         if p in ('ARJUNA.', 'KRISHNA.', 'SANJAYA.', 'DHRITARASHTRA.'): continue
         if len(p) < 30: continue
         k += 1; verses.append(['gita', f'Gita {ch}, stanza {k}', p])

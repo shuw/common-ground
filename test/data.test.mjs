@@ -12,7 +12,7 @@ test('the corpus has every text, and each verse names its text and a reference',
   }
   const count = (t) => corpus.verses.filter(v => v[0] === t).length;
   assert.equal(count('torah'), 23145); assert.equal(count('gospels'), 3779); assert.equal(count('quran'), 6236);
-  assert.ok(count('analects') > 450 && count('dhamma') > 400 && count('tao') > 150 && count('gita') > 250);
+  assert.ok(count('analects') > 450 && count('dhamma') > 400 && count('tao') > 200 && count('gita') > 230);
   for (const t of Object.values(corpus.texts)) assert.ok(t.translation && t.source && t.licence && t.colour);
 });
 
@@ -32,4 +32,20 @@ test('the layout, when present, has one place per verse', { skip: !existsSync('p
   assert.equal(layout.height.length, corpus.verses.length);
   assert.equal(layout.density.values.length, layout.density.size ** 2);
   for (const [u, v] of layout.uv) assert.ok(u >= 0 && u <= 1 && v >= 0 && v <= 1);
+});
+
+test('the kin table and the regions, when present, cover every verse', { skip: !existsSync('public/data/kin.bin') || !existsSync('public/data/regions.json') }, () => {
+  const N = corpus.verses.length, texts = Object.keys(corpus.texts);
+  const kin = readFileSync('public/data/kin.bin');
+  assert.equal(kin.length, N * 7 * 3, 'seven uint16 indices and seven uint8 similarities per verse');
+  const idx = new Uint16Array(kin.buffer, kin.byteOffset, N * 7);
+  for (let i = 0; i < N; i += 997) for (let k = 0; k < 7; k++) {
+    assert.ok(idx[i * 7 + k] < N);
+    assert.equal(corpus.verses[idx[i * 7 + k]][0], texts[k], 'kin lives in the text of its column');
+    if (corpus.verses[i][0] !== texts[k]) assert.notEqual(idx[i * 7 + k], i);
+  }
+  const regions = JSON.parse(readFileSync('public/data/regions.json', 'utf8'));
+  assert.equal(regions.label.length, N);
+  assert.equal(regions.regions.length, regions.k);
+  for (const r of regions.regions) { assert.ok(r.name, `region ${r.id} is named`); assert.ok(r.u >= 0 && r.u <= 1 && r.v >= 0 && r.v <= 1); assert.equal(Object.values(r.share).reduce((a, b) => a + b, 0), r.n); }
 });

@@ -7,8 +7,8 @@ import * as THREE from 'three';
 import { place } from '../space.js';
 
 const VERT = /* glsl */`
-  attribute vec3 aMeaning; attribute vec3 aColor; attribute float aDelay; attribute float aKin;
-  uniform float uPixelRatio, uScale, uMorph, uKin;
+  attribute vec3 aMeaning; attribute vec3 aColor; attribute float aDelay; attribute float aKin; attribute float aHit;
+  uniform float uPixelRatio, uScale, uMorph, uKin, uSearch;
   varying vec3 vColor; varying float vAlpha;
   float swell(float t) { return 1.0 + 0.6 * sin(t * 3.14159); } // a little bigger mid-flight
   void main() {
@@ -22,8 +22,10 @@ const VERT = /* glsl */`
     gl_Position = projectionMatrix * mv;
     // in reading order a verse shines by its kinship; below the threshold it all but goes out
     float lit = smoothstep(uKin - 0.08, uKin, aKin);
-    vAlpha = mix(mix(0.3, 1.0, aKin), 1.0, t) * mix(0.05, 1.0, lit);
-    gl_PointSize = swell(t) * (0.8 + 0.2 * lit) * uScale * uPixelRatio / -mv.z;
+    // a search leaves only its hits shining
+    float hit = mix(1.0, mix(0.06, 1.0, aHit), uSearch);
+    vAlpha = mix(mix(0.3, 1.0, aKin), 1.0, t) * mix(0.05, 1.0, lit) * hit;
+    gl_PointSize = swell(t) * (0.8 + 0.2 * lit) * (1.0 + 0.6 * aHit * uSearch) * uScale * uPixelRatio / -mv.z;
   }`;
 const FRAG = /* glsl */`
   varying vec3 vColor; varying float vAlpha;
@@ -90,8 +92,9 @@ export class VersesLayer {
     geo.setAttribute('aColor', new THREE.BufferAttribute(col, 3));
     geo.setAttribute('aDelay', new THREE.BufferAttribute(delay, 1));
     geo.setAttribute('aKin', new THREE.BufferAttribute(kin, 1));
+    this.hit = new Float32Array(n); geo.setAttribute('aHit', new THREE.BufferAttribute(this.hit, 1));
     geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
-    this.material = new THREE.ShaderMaterial({ uniforms: { uPixelRatio: { value: pixelRatio }, uScale: { value: 22 }, uMorph: { value: 1 }, uKin: { value: 0 } }, vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false });
+    this.material = new THREE.ShaderMaterial({ uniforms: { uPixelRatio: { value: pixelRatio }, uScale: { value: 22 }, uMorph: { value: 1 }, uKin: { value: 0 }, uSearch: { value: 0 } }, vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false });
     this.points = new THREE.Points(geo, this.material);
     this.points.frustumCulled = false;
     return this.points;
@@ -104,7 +107,14 @@ export class VersesLayer {
     return out.set(a[i * 3] + (b[i * 3] - a[i * 3]) * t, a[i * 3 + 1] + (b[i * 3 + 1] - a[i * 3 + 1]) * t + Math.sin(t * Math.PI) * 0.6, a[i * 3 + 2] + (b[i * 3 + 2] - a[i * 3 + 2]) * t);
   }
   /** Whether verse i is lit under the current threshold (a dimmed verse should not catch the pointer). */
-  isLit(i) { return this.kin[i] >= this.threshold - 0.04; }
+  isLit(i) { return this.kin[i] >= this.threshold - 0.04 && (!this.searching || this.hit[i] > 0); }
+  /** Light only these verses (null to light everything again). */
+  setHits(indices) {
+    this.searching = !!indices;
+    this.hit.fill(0); if (indices) for (const i of indices) this.hit[i] = 1;
+    this.points.geometry.getAttribute('aHit').needsUpdate = true;
+    this.material.uniforms.uSearch.value = indices ? 1 : 0;
+  }
 
   setMorph(m) { this.morph = m; if (this.material) this.material.uniforms.uMorph.value = m; }
   setKin(k) { this.threshold = k; if (this.material) this.material.uniforms.uKin.value = k; }
