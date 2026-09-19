@@ -93,8 +93,9 @@ function showVerse(i) {
   const kins = kinOf(i).map((j, k) => j < 0 ? '' : `<div class="k" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}</b><span>${esc(corpus.verses[j][2])}</span></button></div>`).join('');
   card.querySelector('.more').innerHTML = around;
   card.querySelector('.kins').innerHTML = kins;
+  const wasHidden = card.hidden;
   card.hidden = !(help.hidden && about.hidden);
-  if (i !== shown) { shown = i; shownAt = performance.now() / 1000; card.classList.remove('enter'); void card.offsetWidth; card.classList.add('enter'); syncHash(); }
+  if (i !== shown) { const fresh = wasHidden || shown < 0; shown = i; shownAt = performance.now() / 1000; card.classList.remove('enter', 'fresh'); void card.offsetWidth; card.classList.add('enter'); if (fresh) card.classList.add('fresh'); syncHash(); }
 }
 let shown = -1, shownAt = 0; // the verse the card and threads are about, and when it arrived
 let last = { i: -1, at: 0, left: 0 }; // the verse whose threads are still receding

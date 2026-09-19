@@ -4,7 +4,8 @@ html, body { height: 100%; }
 body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(--sans); font-size: 14px; line-height: 1.45; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; }
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 #title { position: fixed; left: 20px; top: calc(16px + env(safe-area-inset-top, 0px)); pointer-events: none; }
-#title h1 { font-family: var(--serif); font-weight: 500; font-size: 30px; margin: 0; line-height: 1; }
+#title h1 { font-family: var(--serif); font-weight: 500; font-size: 30px; margin: 0; line-height: 1; display: flex; align-items: center; gap: 10px; }
+#title .mark { width: 28px; height: 28px; border-radius: 7px; }
 #title p { margin: 4px 0 0; color: var(--dim); font-style: italic; font-family: var(--serif); font-size: 16px; }
 #loading { position: fixed; inset: 0; display: grid; place-items: center; background: var(--ink); color: var(--dim); font-family: var(--serif); font-style: italic; font-size: 18px; transition: opacity 0.6s; z-index: 10; }
 #loading.gone { opacity: 0; pointer-events: none; }
@@ -25,7 +26,7 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
 #card .who { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--c, var(--accent)); }
 #card .verse { font-family: var(--serif); font-size: 21px; line-height: 1.3; margin: 6px 0 4px; }
 #card .tr { font-family: var(--mono); font-size: 10.5px; color: var(--faint); }
-@media (max-width: 640px) { #card { top: auto; bottom: calc(52px + env(safe-area-inset-bottom, 0px)); left: 12px; right: 12px; width: auto; } #legend { display: none; } #title h1 { font-size: 22px; } #title p { display: none; } }
+@media (max-width: 640px) { #title .mark { width: 22px; height: 22px; border-radius: 5px; } #card { top: auto; bottom: calc(52px + env(safe-area-inset-bottom, 0px)); left: 12px; right: 12px; width: auto; } #legend { display: none; } #title h1 { font-size: 22px; } #title p { display: none; } }
 #labels { position: fixed; inset: 0; pointer-events: none; overflow: hidden; }
 #labels .band { position: absolute; left: 0; top: 0; font-family: var(--serif); font-size: 15px; white-space: nowrap; padding-right: 10px; text-shadow: 0 1px 6px #000; transition: opacity 0.15s; }
 #order { position: fixed; right: 16px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; padding: 3px; gap: 2px; border-radius: 999px; border: 1px solid rgba(215,180,106,0.45); background: rgba(215,180,106,0.06); }
@@ -92,7 +93,7 @@ kbd { font-family: var(--mono); font-size: 10px; line-height: 1; padding: 2px 5p
 #labels .landmark::before { content: ""; position: absolute; left: 3px; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%; background: currentColor; }
 #labels .landmark:hover { background: rgba(15,19,22,0.9); }
 @media (max-width: 640px) { #labels .landmark { font-size: 10px; } }
-#card.enter .main { animation: card-in 0.1s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+#card.fresh .main { animation: card-in 0.1s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
 #card.enter .k { animation: kin-in 0.14s cubic-bezier(0.2, 0.8, 0.3, 1) both; animation-delay: calc(0.2s + var(--n, 0) * 10ms); }
 #card.enter .kins::before, #card.enter .k::before { animation: fade-in 0.2s 0.42s both; } /* the spine and its ties come once the last kin is in */
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
