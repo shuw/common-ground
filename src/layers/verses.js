@@ -4,11 +4,11 @@
 // after the one before it, so a book unravels from its band into the landscape. Each verse also carries
 // its kinship: how much of its neighbourhood belongs to other texts, against what a shuffle would give.
 import * as THREE from 'three';
-import { place } from '../space.js';
+import { place, EXTENT } from '../space.js';
 
 const VERT = /* glsl */`
   attribute vec3 aMeaning; attribute vec3 aColor; attribute float aDelay; attribute float aKin; attribute float aHit;
-  uniform float uPixelRatio, uScale, uMorph, uKin, uSearch, uRead, uReadOn;
+  uniform float uPixelRatio, uScale, uMorph, uKin, uSearch, uRead, uReadOn, uTime, uExtent;
   varying vec3 vColor; varying float vAlpha;
   float swell(float t) { return 1.0 + 0.6 * sin(t * 3.14159); } // a little bigger mid-flight
   void main() {
@@ -18,6 +18,9 @@ const VERT = /* glsl */`
     t = t * t * (3.0 - 2.0 * t);
     vec3 p = mix(position, aMeaning, t);
     p.y += sin(t * 3.14159) * 0.6; // an arc on the way, so the flight reads as flight
+    // at rest on the terrain every verse sways a hair, as if the ground were water
+    float ph = aDelay * 61.0 + aKin * 17.0;
+    p.x += sin(uTime * 0.6 + ph) * 0.006 * t; p.z += cos(uTime * 0.5 + ph * 1.3) * 0.006 * t; p.y += sin(uTime * 0.8 + ph) * 0.003 * t;
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
     gl_Position = projectionMatrix * mv;
     // in reading order a verse shines by its kinship; below the threshold it all but goes out
@@ -28,8 +31,11 @@ const VERT = /* glsl */`
     float rel = aDelay - uRead, ahead = step(0.0, rel), front = smoothstep(-0.045, 0.0, rel) * (1.0 - ahead);
     float read = mix(1.0, mix(0.6 + 0.4 * front, 0.35, ahead), uReadOn);
     vColor = mix(vColor, vec3(1.0), 0.6 * front * uReadOn);
-    vAlpha = mix(mix(0.3, 1.0, aKin), 1.0, t) * mix(0.05, 1.0, lit) * hit * read;
-    gl_PointSize = swell(t) * (0.8 + 0.2 * lit) * (1.0 + 0.6 * aHit * uSearch) * (1.0 + 1.3 * front * uReadOn) * uScale * uPixelRatio / -mv.z;
+    // embers: the most shared verses glow and dim on their own slow cycles; a band of light passes over the ground
+    float ember = smoothstep(0.55, 0.9, aKin) * (0.5 + 0.5 * sin(uTime * 0.9 + ph)) * t;
+    float sweep = mod(uTime / 40.0, 1.6) - 0.3, band = exp(-pow((p.x / uExtent + 0.5 - sweep) / 0.12, 2.0));
+    vAlpha = mix(mix(0.3, 1.0, aKin), 1.0, t) * mix(0.05, 1.0, lit) * hit * read * (1.0 + 0.35 * ember) * (1.0 + 0.3 * band);
+    gl_PointSize = swell(t) * (0.8 + 0.2 * lit) * (1.0 + 0.6 * aHit * uSearch) * (1.0 + 1.3 * front * uReadOn) * (1.0 + 0.25 * ember) * uScale * uPixelRatio / -mv.z;
   }`;
 const FRAG = /* glsl */`
   varying vec3 vColor; varying float vAlpha;
@@ -72,7 +78,7 @@ export function readingLayout(corpus) {
 function indexBooks(books) { for (const list of Object.values(books)) { let s = 0; for (const b of list) { b.start = s; b.end = s + b.n; s = b.end; } } }
 
 export class VersesLayer {
-  constructor() { this.points = null; this.meaning = null; this.morph = 1; this.threshold = 0; }
+  constructor() { this.points = null; this.meaning = null; this.morph = 1; this.threshold = 0; this.time = 0; }
 
   build(corpus, layout, heightAt, pixelRatio) {
     const n = layout.uv.length, N = corpus.verses.length;
@@ -98,18 +104,19 @@ export class VersesLayer {
     geo.setAttribute('aKin', new THREE.BufferAttribute(kin, 1));
     this.hit = new Float32Array(n); geo.setAttribute('aHit', new THREE.BufferAttribute(this.hit, 1));
     geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
-    this.material = new THREE.ShaderMaterial({ uniforms: { uPixelRatio: { value: pixelRatio }, uScale: { value: 22 }, uMorph: { value: 1 }, uKin: { value: 0 }, uSearch: { value: 0 }, uRead: { value: 0 }, uReadOn: { value: 0 } }, vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false });
+    this.material = new THREE.ShaderMaterial({ uniforms: { uPixelRatio: { value: pixelRatio }, uScale: { value: 22 }, uMorph: { value: 1 }, uKin: { value: 0 }, uSearch: { value: 0 }, uRead: { value: 0 }, uReadOn: { value: 0 }, uTime: { value: 0 }, uExtent: { value: EXTENT } }, vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false });
     this.points = new THREE.Points(geo, this.material);
     this.points.frustumCulled = false;
     return this.points;
   }
 
-  /** Where verse i is right now, for hit-testing: the same blend as the shader. */
+  /** Where verse i is right now, for hit-testing and threads: the same blend and sway as the shader. */
   positionOf(i, out) {
     const t0 = Math.min(1, Math.max(0, this.morph * 1.35 - this.delays[i] * 0.35)), t = t0 * t0 * (3 - 2 * t0);
-    const a = this.readingPositions, b = this.meaning;
-    return out.set(a[i * 3] + (b[i * 3] - a[i * 3]) * t, a[i * 3 + 1] + (b[i * 3 + 1] - a[i * 3 + 1]) * t + Math.sin(t * Math.PI) * 0.6, a[i * 3 + 2] + (b[i * 3 + 2] - a[i * 3 + 2]) * t);
+    const a = this.readingPositions, b = this.meaning, ph = this.delays[i] * 61 + this.kin[i] * 17, time = this.time;
+    return out.set(a[i * 3] + (b[i * 3] - a[i * 3]) * t + Math.sin(time * 0.6 + ph) * 0.006 * t, a[i * 3 + 1] + (b[i * 3 + 1] - a[i * 3 + 1]) * t + Math.sin(t * Math.PI) * 0.6 + Math.sin(time * 0.8 + ph) * 0.003 * t, a[i * 3 + 2] + (b[i * 3 + 2] - a[i * 3 + 2]) * t + Math.cos(time * 0.5 + ph * 1.3) * 0.006 * t);
   }
+  setTime(t) { this.time = t; if (this.material) this.material.uniforms.uTime.value = t; }
   /** Whether verse i is lit under the current threshold (a dimmed verse should not catch the pointer). */
   isLit(i) { return this.kin[i] >= this.threshold - 0.04 && (!this.searching || this.hit[i] > 0); }
   /** Light only these verses (null to light everything again). */

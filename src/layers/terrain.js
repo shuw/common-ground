@@ -1,22 +1,25 @@
 // The ground: a relief mesh whose height is the density of verses, lit from a low sun so ridges catch
 // light and valleys stay dark. Built from the density grid in layout.json, placed through space.js.
 import * as THREE from 'three';
-import { place } from '../space.js';
+import { place, EXTENT } from '../space.js';
 
 const VERT = /* glsl */`
-  varying float vH; varying vec3 vNormal;
+  varying float vH; varying vec3 vNormal; varying float vX;
   void main() {
-    vH = position.y;
+    vH = position.y; vX = position.x;
     vNormal = normalize(normalMatrix * normal);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }`;
 const FRAG = /* glsl */`
-  uniform float uRelief, uRise;
-  varying float vH; varying vec3 vNormal;
+  uniform float uRelief, uRise, uTime, uExtent;
+  varying float vH; varying vec3 vNormal; varying float vX;
   void main() {
     float h = clamp(vH / uRelief, 0.0, 1.0) * uRise;
     vec3 sun = normalize(vec3(-0.6, 0.5, 0.4));
     float lit = 0.35 + 0.65 * max(dot(vNormal, sun), 0.0);
+    // a soft band of light passes over the ground every forty seconds, like cloud shadow moving off hills
+    float sweep = mod(uTime / 40.0, 1.6) - 0.3, band = exp(-pow((vX / uExtent + 0.5 - sweep) / 0.12, 2.0));
+    lit *= 1.0 + 0.35 * band * uRise;
     vec3 low = vec3(0.075, 0.095, 0.11), high = vec3(0.34, 0.33, 0.30);
     vec3 c = mix(low, high, pow(h, 0.7)) * lit;
     gl_FragColor = vec4(c, 1.0);
@@ -38,7 +41,7 @@ export class TerrainLayer {
       pos.setXYZ(i, p.x, p.y, p.z);
     }
     geo.computeVertexNormals();
-    const mat = new THREE.ShaderMaterial({ uniforms: { uRelief: { value: relief }, uRise: { value: 1 } }, vertexShader: VERT, fragmentShader: FRAG });
+    const mat = new THREE.ShaderMaterial({ uniforms: { uRelief: { value: relief }, uRise: { value: 1 }, uTime: { value: 0 }, uExtent: { value: EXTENT } }, vertexShader: VERT, fragmentShader: FRAG });
     this.mesh = new THREE.Mesh(geo, mat);
     return this.mesh;
   }
