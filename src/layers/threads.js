@@ -37,7 +37,7 @@ export class ThreadsLayer {
     let k = 0, n = 0;
     for (let t = 0; t < kin.length; t++) {
       if (kin[t] < 0) continue;
-      const tp = Math.min(1, Math.max(0, progress * 1.4 - (n++) * 0.07)), reach = 1 - Math.pow(1 - tp, 3);
+      const tp = Math.min(1, Math.max(0, progress * 1.3 - (n++) * 0.05)), reach = 1 - Math.pow(1 - tp, 3);
       if (reach <= 0) continue;
       positionOf(kin[t], this.b); this.c.set(colours[t]);
       const lift = 0.08 + this.a.distanceTo(this.b) * 0.12;

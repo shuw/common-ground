@@ -95,9 +95,11 @@ export class GroundCamera {
 
   update() {
     const now = performance.now(), dt = Math.min(0.1, (now - this.last) / 1000); this.last = now;
-    const k = 1 - Math.exp(-dt * 14);
+    const k = 1 - Math.exp(-dt * 24); // quick to follow, with no long tail
     this.target.lerp(this.goalTarget, k);
     this.distance += (this.goalDistance - this.distance) * k;
+    if (this.target.distanceToSquared(this.goalTarget) < 1e-6) this.target.copy(this.goalTarget);
+    if (Math.abs(this.goalDistance - this.distance) < 1e-4) this.distance = this.goalDistance;
     this.camera.position.copy(this.offset).multiplyScalar(this.distance).add(this.target);
     this.camera.lookAt(this.target);
   }

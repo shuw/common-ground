@@ -42,7 +42,7 @@ document.addEventListener('keydown', (ev) => {
   if (ev.metaKey || ev.ctrlKey || ev.altKey || ev.target === qInput) return;
   if (ev.key === '?') showHelp(help.hidden);
   else if (ev.key === '/') { qInput.focus(); qInput.select(); ev.preventDefault(); }
-  else if (ev.key === 'Escape') { if (!help.hidden) showHelp(false); else if (!about.hidden) showAbout(false); else if (query) clearSearch(); else if (pinned >= 0) unpin(); }
+  else if (ev.key === 'Escape') { if (guideOn) showGuide(false); else if (!help.hidden) showHelp(false); else if (!about.hidden) showAbout(false); else if (query) clearSearch(); else if (pinned >= 0) unpin(); }
   const cx = canvas.clientWidth / 2, cy = canvas.clientHeight / 2, step = controls.goalDistance * 0.12;
   const pan = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[ev.key];
   if (pan) { controls.panBy(...pan); ev.preventDefault(); }
@@ -183,6 +183,48 @@ function placeRegionLabels() {
   return placed;
 }
 
+// The guide: what the three dimensions mean, drawn on the scene itself. A rule up the highest peak for height,
+// a span between two far regions for distance, and notes for colour and, in reading order, for the run of a band.
+const guide = $('guide'), guideLabels = $('guide-labels'), guideBtn = $('guide-btn');
+const gl = { rule: guide.querySelector('.rule'), span: guide.querySelector('.span'), ta: guide.querySelector('.tick.a'), tb: guide.querySelector('.tick.b') };
+const gt = { height: guideLabels.querySelector('.height'), span: guideLabels.querySelector('.span'), order: guideLabels.querySelector('.order'), bright: guideLabels.querySelector('.bright'), colour: guideLabels.querySelector('.colour') };
+let guideOn = false, guidePoints = null;
+function showGuide(on) {
+  guideOn = on; guide.style.display = on ? '' : 'none'; guideLabels.hidden = !on; guideLabels.classList.toggle('on', on); guideBtn.setAttribute('aria-pressed', on);
+  if (on) card.hidden = true; else try { localStorage.setItem('cg-guided', '1'); } catch {}
+}
+guideBtn.addEventListener('click', () => showGuide(!guideOn));
+guideLabels.querySelector('.dismiss').addEventListener('click', () => showGuide(false));
+const _q = new THREE.Vector3();
+const toScreen = (v) => { const w = canvas.clientWidth, h = canvas.clientHeight; return [(v.x + 1) / 2 * w, (1 - v.y) / 2 * h, v.z < 1]; };
+function setLine(el, a, b) { el.setAttribute('x1', a[0]); el.setAttribute('y1', a[1]); el.setAttribute('x2', b[0]); el.setAttribute('y2', b[1]); el.style.opacity = a[2] && b[2] ? 1 : 0; }
+function putLabel(el, x, y, anchor = 'left') {
+  const w = canvas.clientWidth, h = canvas.clientHeight, lw = Math.min(240, w - 24); // kept inside the screen
+  if (anchor === 'center') x -= lw / 2;
+  x = Math.min(w - lw - 12, Math.max(12, x)); y = Math.min(h - 120, Math.max(60, y));
+  el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+}
+function placeGuide() {
+  if (!guideOn || !guidePoints) return;
+  const meaning = order.value > 0.5, w = canvas.clientWidth;
+  gt.height.style.display = gt.span.style.display = meaning ? '' : 'none';
+  gt.order.style.display = gt.bright.style.display = meaning ? 'none' : '';
+  gl.rule.style.opacity = gl.span.style.opacity = gl.ta.style.opacity = gl.tb.style.opacity = 0;
+  if (meaning) {
+    const { peak, far } = guidePoints;
+    const foot = toScreen(place(peak[0], peak[1], 0, _q).project(camera)), top = toScreen(place(peak[0], peak[1], terrain.heightAt(peak[0], peak[1]) + 0.25, _q).project(camera));
+    setLine(gl.rule, foot, top); putLabel(gt.height, top[0] + 10, top[1] - 12);
+    const a = toScreen(place(far[0][0], far[0][1], terrain.heightAt(far[0][0], far[0][1]) + 0.04, _q).project(camera)), b = toScreen(place(far[1][0], far[1][1], terrain.heightAt(far[1][0], far[1][1]) + 0.04, _q).project(camera));
+    setLine(gl.span, a, b); putLabel(gt.span, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2 + 10, 'center');
+  } else {
+    const band = verses.bands[textIds[0]], y = band.top - 0.03;
+    const a = toScreen(place(0.06, y, 0.01, _q).project(camera)), b = toScreen(place(0.94, y, 0.01, _q).project(camera));
+    setLine(gl.rule, a, b); setLine(gl.ta, [a[0], a[1] - 5, a[2]], [a[0], a[1] + 5, a[2]]); setLine(gl.tb, [b[0], b[1] - 5, b[2]], [b[0], b[1] + 5, b[2]]);
+    putLabel(gt.order, (a[0] + b[0]) / 2, a[1] - 52, 'center');
+  }
+  void w;
+}
+
 // Landmarks: passages people know, named where they sit, in either order; they fly with their verses.
 const landmarks = [];
 function placeLandmarks(placed) {
@@ -259,7 +301,7 @@ function frame() {
     const e = Math.min(1, Math.max(0, (now - order.t0 - order.wait) / order.seconds));
     applyOrder(order.from + (order.target - order.from) * (e < 0.5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2));
   }
-  placeBandLabels(); placeLandmarks(placeRegionLabels());
+  placeBandLabels(); placeLandmarks(placeRegionLabels()); placeGuide();
   resetBtn.hidden = controls.goalTarget.lengthSq() < 1e-4 && Math.abs(controls.goalDistance - controls.home.distance) < 1e-3;
   if (hover && corpus && !controls.dragging) {
     const { x, y } = hover; hover = null;
@@ -268,13 +310,13 @@ function frame() {
     if (i !== candidate.i) candidate = { i, since: now };
   }
   // a verse is picked once the pointer has rested on it a moment, and let go the same way, so neighbours do not flicker
-  if (pinned < 0 && candidate.i !== shown && now - candidate.since > 0.1) {
+  if (pinned < 0 && candidate.i !== shown && now - candidate.since > (candidate.i >= 0 ? 0.05 : 0.12)) {
     if (candidate.i >= 0) showVerse(candidate.i, false); else { card.hidden = true; shown = -1; threads.hide(); }
   }
   if (shown >= 0 && kin) {
     const colour = corpus.texts[corpus.verses[shown][0]].colour, at = (j, out) => verses.positionOf(j, out);
-    threads.show(shown, kinOf(shown), textIds.map((t) => corpus.texts[t].colour), at, (now - shownAt) / 0.45);
-    threads.pulseAt(shown, colour, at, (now - shownAt) / 0.55, pixelRatio);
+    threads.show(shown, kinOf(shown), textIds.map((t) => corpus.texts[t].colour), at, (now - shownAt) / 0.3);
+    threads.pulseAt(shown, colour, at, (now - shownAt) / 0.4, pixelRatio);
   } else threads.hide();
   renderer.render(scene, camera);
 }
@@ -303,6 +345,13 @@ async function boot() {
     $('labels').appendChild(el); regionLabels.push({ el, u: r.u, v: r.v, n: r.n, w: r.name.length * (7 + Math.min(8, r.n / 250) * 0.5) });
   }
   regionLabels.sort((a, b) => b.n - a.n);
+  { // the guide's anchors: the highest peak, and the two of the six largest regions furthest apart
+    const G = layout.density.size, d = layout.density.values; let best = 0;
+    for (let i = 1; i < d.length; i++) if (d[i] > d[best]) best = i;
+    const big = regionLabels.slice(0, 6); let far = null, fd = -1;
+    for (const a of big) for (const b of big) { const dd = Math.hypot(a.u - b.u, a.v - b.v); if (dd > fd) { fd = dd; far = [[a.u, a.v], [b.u, b.v]]; } }
+    guidePoints = { peak: [(best % G) / (G - 1), Math.floor(best / G) / (G - 1)], far };
+  }
   for (const [ref, name] of marks) {
     const i = refIndex.get(ref); if (i === undefined) { console.warn('no such landmark', ref); continue; }
     const el = document.createElement('button'); el.className = 'landmark'; el.textContent = name; el.title = ref; el.style.color = corpus.texts[corpus.verses[i][0]].colour;
@@ -316,9 +365,15 @@ async function boot() {
   syncOrderButtons();
   if (wanted >= 0) { pinned = wanted; showVerse(wanted, true); const p = verses.positionOf(wanted, new THREE.Vector3()); controls.flyTo(p.x, p.z, EXTENT * 0.45); }
   if (want.q) runSearch(want.q);
+  let guided = false; try { guided = !!localStorage.getItem('cg-guided'); } catch {}
+  if (!location.hash && !guided) { // the first visit opens with the guide, which any move of the hand dismisses
+    showGuide(true);
+    const off = () => { if (guideOn) showGuide(false); for (const ev of ['pointerdown', 'wheel', 'keydown']) window.removeEventListener(ev, off); };
+    setTimeout(() => { for (const ev of ['pointerdown', 'wheel', 'keydown']) window.addEventListener(ev, off); }, 600);
+  }
   $('legend').innerHTML = Object.entries(corpus.texts).map(([k, t]) => `<span><i style="background:${t.colour}"></i>${t.name} <b>${t.verses.toLocaleString()}</b></span>`).join('');
   $('loading').classList.add('gone');
   requestAnimationFrame(frame);
 }
 boot().catch((err) => { $('loading').textContent = 'The corpus failed to load. Refresh to try again.'; console.error(err); });
-window.__cg = { scene, camera, controls, terrain, verses, threads, order, setOrder, setKin, pin, unpin, runSearch, clearSearch, get search() { return search; }, get kin() { return kin; }, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };
+window.__cg = { scene, camera, controls, terrain, verses, threads, order, setOrder, setKin, pin, unpin, showGuide, runSearch, clearSearch, get search() { return search; }, get kin() { return kin; }, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };

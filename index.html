@@ -15,10 +15,19 @@
     <p>Every verse of seven founding texts, placed by what it means.</p>
   </div>
   <div id="labels"></div>
+  <svg id="guide" style="display:none" aria-hidden="true"><line class="rule" /><line class="span" /><line class="tick a" /><line class="tick b" /></svg>
+  <div id="guide-labels" hidden>
+    <div class="g height"><b>height</b> how many verses stand here</div>
+    <div class="g span"><b>distance</b> how alike in meaning: far apart is little in common</div>
+    <div class="g order"><b>left to right</b> reading order, first verse to last</div>
+    <div class="g bright"><b>brightness</b> kinship: how much a verse's neighbours come from other texts</div>
+    <div class="g colour"><b>colour</b> which text</div>
+    <button class="g dismiss" type="button">got it</button>
+  </div>
   <form id="search" role="search"><input id="q" type="search" placeholder="search by meaning: love your enemies, the wind, a father's mercy…" autocomplete="off" spellcheck="false"><button type="button" id="clear" hidden aria-label="Clear search">×</button></form>
   <div id="results" hidden><div class="how"></div><ul></ul></div>
   <nav id="order" aria-label="Order"><button data-order="reading" aria-pressed="true" title="Each book in reading order">reading order <kbd>r</kbd></button><button data-order="meaning" aria-pressed="false" title="Every verse placed by its meaning">by meaning <kbd>m</kbd></button></nav>
-  <div id="tools"><button id="reset" hidden title="Back to the whole ground">reset view <kbd>h</kbd></button><button id="about-btn" title="What this is and how it was made">about</button><button id="help-btn" title="Keyboard shortcuts">keys <kbd>?</kbd></button></div>
+  <div id="tools"><button id="reset" hidden title="Back to the whole ground">reset view <kbd>h</kbd></button><button id="guide-btn" title="What the height, the distances and the colours mean">how to read it</button><button id="about-btn" title="What this is and how it was made">about</button><button id="help-btn" title="Keyboard shortcuts">keys <kbd>?</kbd></button></div>
   <div id="about" hidden role="dialog" aria-label="About">
     <h2>Common Ground</h2>
     <p>Every verse of seven founding texts, placed by what it means. Each verse was read by one multilingual language model and turned into a point in a space where nearby points say similar things; that space was flattened to a map, and the map drawn as ground whose height is how many verses stand there. Where the colours pile up, the traditions say the same thing. A region of one colour is a tradition's own.</p>

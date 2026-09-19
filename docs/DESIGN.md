@@ -26,6 +26,10 @@ A verse's kinship is its mixing score against chance: the share of its fifteen n
 
 `public/data/landmarks.json` names forty-odd passages people already know (Psalm 23, the Beatitudes, the Throne Verse, the opening of the Tao Te Ching, the Golden Rule in each text). Each is labelled where its verse sits, in either order, flying with it during the morph, and yields to region labels and to each other when crowded. They are a way in for a newcomer, not a canon.
 
+## The guide
+
+The three dimensions are explained on the scene rather than in a paragraph: a rule up the highest peak for height (how many verses stand here), a dashed span between the two largest regions furthest apart for distance (how alike in meaning), and a note by the legend for colour. In reading order the rule runs along the first band for reading order and a note sits by the kinship slider for brightness. It opens on the first visit and any move of the hand dismisses it; the "how to read it" pill brings it back.
+
 ## Hover
 
 A verse is picked once the pointer has rested on it for a tenth of a second, and let go the same way, so neighbouring points do not flicker as the pointer crosses them. When one is picked the card slides in, a ring spreads from the point and fades, and the six threads grow out of it to their kin, each a little after the last, all inside half a second.
