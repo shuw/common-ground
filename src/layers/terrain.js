@@ -11,10 +11,10 @@ const VERT = /* glsl */`
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
   }`;
 const FRAG = /* glsl */`
-  uniform float uRelief;
+  uniform float uRelief, uRise;
   varying float vH; varying vec3 vNormal;
   void main() {
-    float h = clamp(vH / uRelief, 0.0, 1.0);
+    float h = clamp(vH / uRelief, 0.0, 1.0) * uRise;
     vec3 sun = normalize(vec3(-0.6, 0.5, 0.4));
     float lit = 0.35 + 0.65 * max(dot(vNormal, sun), 0.0);
     vec3 low = vec3(0.075, 0.095, 0.11), high = vec3(0.34, 0.33, 0.30);
@@ -38,7 +38,7 @@ export class TerrainLayer {
       pos.setXYZ(i, p.x, p.y, p.z);
     }
     geo.computeVertexNormals();
-    const mat = new THREE.ShaderMaterial({ uniforms: { uRelief: { value: relief } }, vertexShader: VERT, fragmentShader: FRAG });
+    const mat = new THREE.ShaderMaterial({ uniforms: { uRelief: { value: relief }, uRise: { value: 1 } }, vertexShader: VERT, fragmentShader: FRAG });
     this.mesh = new THREE.Mesh(geo, mat);
     return this.mesh;
   }
