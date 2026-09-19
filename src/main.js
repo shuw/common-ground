@@ -345,7 +345,7 @@ function frame() {
   if (shown >= 0 && kin && (held || overCard || candidate.i === shown)) { last = { i: shown, at: shownAt, left: 0 }; threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt); }
   else if (last.i >= 0 && kin) {
     if (!last.left) last.left = now;
-    if (now - last.left < 0.16) threads.show(last.i, kinOf(last.i), textColours, corpus.texts[corpus.verses[last.i][0]].colour, (j, out) => verses.positionOf(j, out), last.left - last.at, now - last.left);
+    if (now - last.left < 0.1) threads.show(last.i, kinOf(last.i), textColours, corpus.texts[corpus.verses[last.i][0]].colour, (j, out) => verses.positionOf(j, out), last.left - last.at, now - last.left);
     else { threads.hide(); last.i = -1; }
   } else threads.hide();
   threads.setTrail(walk, (j, out) => verses.positionOf(j, out));
