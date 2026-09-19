@@ -95,7 +95,7 @@ kbd { font-family: var(--mono); font-size: 10px; line-height: 1; padding: 2px 5p
 #labels .landmark::before { content: ""; position: absolute; left: 3px; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 50%; background: currentColor; }
 #labels .landmark:hover { background: rgba(15,19,22,0.9); }
 @media (max-width: 640px) { #labels .landmark { font-size: 10px; } }
-#card.enter { animation: card-in 0.13s cubic-bezier(0.2, 0.8, 0.3, 1); }
+#card.enter { animation: card-in 0.1s cubic-bezier(0.2, 0.8, 0.3, 1); }
 @keyframes card-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 #guide { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
 #guide line { stroke: var(--accent); stroke-width: 1.2; stroke-linecap: round; }
@@ -109,3 +109,5 @@ kbd { font-family: var(--mono); font-size: 10px; line-height: 1; padding: 2px 5p
 #guide-labels.on .g { opacity: 1; }
 #guide-btn[aria-pressed="true"] { color: var(--bone); border-color: var(--accent); }
 @media (max-width: 640px) { #guide-labels .g { font-size: 11.5px; max-width: 190px; } #guide-labels .colour { display: none; } #guide-labels .bright { bottom: calc(150px + env(safe-area-inset-bottom, 0px)); } #guide-labels .dismiss { top: calc(100px + env(safe-area-inset-top, 0px)); } }
+#search .hint { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+#search input:focus ~ .hint, #search input:not(:placeholder-shown) ~ .hint { display: none; }

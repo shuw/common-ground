@@ -18,13 +18,14 @@ const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 200);
 const controls = new GroundCamera(camera, canvas, { extent: EXTENT, minDistance: 1.2, maxDistance: EXTENT * 2.2 });
 
 const terrain = new TerrainLayer(), verses = new VersesLayer(), threads = new ThreadsLayer();
-let corpus = null, layout = null, kin = null, textIds = [], regions = null, search = null, refIndex = new Map();
+let corpus = null, layout = null, kin = null, textIds = [], textColours = [], regions = null, search = null, refIndex = new Map();
 
 let sized = false;
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
   renderer.setSize(w, h, false);
   camera.aspect = w / h; camera.updateProjectionMatrix();
+  threads.resize(w, h, pixelRatio);
   // home is the distance at which the whole ground fits the width of the screen; a tall screen sits further back
   const fit = Math.max(EXTENT * 1.275, (EXTENT * 0.55) / (Math.tan(camera.fov / 2 * Math.PI / 180) * camera.aspect));
   controls.setHome(fit, !sized); sized = true;
@@ -32,7 +33,7 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// Keys: arrows slide the ground, + and - zoom, h goes home; r, m and space pick the order.
+// Keys: arrows slide the ground, + and - zoom, x resets the view; r, m and space pick the order.
 const resetBtn = $('reset');
 resetBtn.addEventListener('click', () => controls.goHome());
 const help = $('help'), helpBtn = $('help-btn');
@@ -48,20 +49,30 @@ document.addEventListener('keydown', (ev) => {
   if (pan) { controls.panBy(...pan); ev.preventDefault(); }
   else if (ev.key === '+' || ev.key === '=') controls.zoomAt(0.7, cx, cy);
   else if (ev.key === '-' || ev.key === '_') controls.zoomAt(1 / 0.7, cx, cy);
-  else if (ev.key === 'h') controls.goHome();
+  else if (ev.key === 'x') controls.goHome();
 });
 
 // Reading: the nearest verse to the pointer, found by projecting the points (a few tens of thousands: fine on a move, not every frame).
 const _p = new THREE.Vector3();
+let screen = null, screenKey = ''; // every verse's place on screen, refreshed only when the view or the flight moves
+function projectAll() {
+  const w = canvas.clientWidth, h = canvas.clientHeight, n = verses.meaning.length / 3;
+  const key = `${camera.matrixWorldInverse.elements.join(',')}|${order.value}|${w}x${h}`;
+  if (key === screenKey) return; screenKey = key;
+  if (!screen || screen.length !== n * 3) screen = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) {
+    verses.positionOf(i, _p).project(camera);
+    screen[i * 3] = (_p.x + 1) / 2 * w; screen[i * 3 + 1] = (1 - _p.y) / 2 * h; screen[i * 3 + 2] = _p.z;
+  }
+}
 function nearestVerse(sx, sy, px = 8) {
   if (!verses.meaning) return -1;
-  const w = canvas.clientWidth, h = canvas.clientHeight, n = verses.meaning.length / 3;
+  projectAll();
+  const n = screen.length / 3;
   let best = -1, bd = px * px;
   for (let i = 0; i < n; i++) {
-    if (!verses.isLit(i)) continue;
-    verses.positionOf(i, _p).project(camera);
-    if (_p.z > 1) continue;
-    const dx = (_p.x + 1) / 2 * w - sx, dy = (1 - _p.y) / 2 * h - sy, d = dx * dx + dy * dy;
+    if (screen[i * 3 + 2] > 1 || !verses.isLit(i)) continue;
+    const dx = screen[i * 3] - sx, dy = screen[i * 3 + 1] - sy, d = dx * dx + dy * dy;
     if (d < bd) { bd = d; best = i; }
   }
   return best;
@@ -156,8 +167,10 @@ async function runSearch(q) {
     if (run === searchRun) renderResults(`by words · ${words.length.toLocaleString()} verses · <b>the meaning model could not load</b>`, bestPerText(words));
   }
 }
-function clearSearch() { query = ''; searchRun++; qInput.value = ''; results.hidden = true; clearBtn.hidden = true; if (verses.points) verses.setHits(null); syncHash(); }
+function clearSearch() { query = ''; searchRun++; if (document.activeElement !== qInput) qInput.value = ''; results.hidden = true; clearBtn.hidden = true; if (verses.points) verses.setHits(null); syncHash(); }
 $('search').addEventListener('submit', (e) => { e.preventDefault(); const q = qInput.value.trim(); if (q) runSearch(q); else clearSearch(); qInput.blur(); });
+let typing = 0; // the search runs as you type, a beat after the last key
+qInput.addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(() => { const q = qInput.value.trim(); if (q.length >= 2) { if (q !== query) runSearch(q); } else if (query) clearSearch(); }, 220); });
 clearBtn.addEventListener('click', clearSearch);
 qInput.addEventListener('keydown', (e) => { if (e.key === 'Escape') { clearSearch(); qInput.blur(); } e.stopPropagation(); });
 
@@ -310,14 +323,11 @@ function frame() {
     if (i !== candidate.i) candidate = { i, since: now };
   }
   // a verse is picked once the pointer has rested on it a moment, and let go the same way, so neighbours do not flicker
-  if (pinned < 0 && candidate.i !== shown && now - candidate.since > (candidate.i >= 0 ? 0.05 : 0.12)) {
+  if (pinned < 0 && candidate.i !== shown && (candidate.i >= 0 || now - candidate.since > 0.12)) { // a verse shows at once; letting go waits a moment
     if (candidate.i >= 0) showVerse(candidate.i, false); else { card.hidden = true; shown = -1; threads.hide(); }
   }
-  if (shown >= 0 && kin) {
-    const colour = corpus.texts[corpus.verses[shown][0]].colour, at = (j, out) => verses.positionOf(j, out);
-    threads.show(shown, kinOf(shown), textIds.map((t) => corpus.texts[t].colour), at, (now - shownAt) / 0.3);
-    threads.pulseAt(shown, colour, at, (now - shownAt) / 0.4, pixelRatio);
-  } else threads.hide();
+  if (shown >= 0 && kin) threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt);
+  else threads.hide();
   renderer.render(scene, camera);
 }
 
@@ -327,10 +337,10 @@ async function boot() {
   [corpus, layout, kinBuf, regions, marks] = await Promise.all([fetch(`${base}data/corpus.json`).then(r => r.json()), fetch(`${base}data/layout.json`).then(r => r.json()), fetch(`${base}data/kin.bin`).then(r => r.arrayBuffer()), fetch(`${base}data/regions.json`).then(r => r.json()), fetch(`${base}data/landmarks.json`).then(r => r.json())]);
   corpus.verses.forEach((v, i) => refIndex.set(v[1], i));
   search = new Search(base, corpus);
-  textIds = Object.keys(corpus.texts);
+  textIds = Object.keys(corpus.texts); textColours = textIds.map((t) => corpus.texts[t].colour);
   const N = corpus.verses.length;
   kin = { idx: new Uint16Array(kinBuf, 0, N * 7), sim: new Uint8Array(kinBuf, N * 7 * 2, N * 7) };
-  scene.add(threads.lines); scene.add(threads.pulse);
+  scene.add(threads.group); threads.resize(canvas.clientWidth, canvas.clientHeight, pixelRatio);
   scene.add(terrain.build(layout, RELIEF));
   scene.add(verses.build(corpus, layout, (u, v) => terrain.heightAt(u, v), pixelRatio));
   for (const [k, b] of Object.entries(verses.bands)) { const el = document.createElement('div'); el.className = 'band'; el.textContent = corpus.texts[k].name; el.style.color = corpus.texts[k].colour; $('labels').appendChild(el); bandLabels.push({ el, u: 0.05, v: b.mid }); }
