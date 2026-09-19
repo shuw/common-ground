@@ -33,9 +33,9 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// Keys: arrows slide the ground, + and - zoom, x resets the view; r, m and space pick the order.
+// Keys: arrows slide the ground, + and - zoom, z resets the view; r, m and space pick the order.
 const resetBtn = $('reset');
-resetBtn.addEventListener('click', () => { controls.goHome(); before = null; });
+resetBtn.addEventListener('click', () => controls.goHome());
 const help = $('help'), helpBtn = $('help-btn');
 function showHelp(on) { help.hidden = !on; helpBtn.setAttribute('aria-expanded', on); if (on) { card.hidden = true; about.hidden = true; aboutBtn.setAttribute('aria-expanded', false); } }
 helpBtn.addEventListener('click', () => showHelp(help.hidden));
@@ -49,7 +49,7 @@ document.addEventListener('keydown', (ev) => {
   if (pan) { controls.panBy(...pan); ev.preventDefault(); }
   else if (ev.key === '+' || ev.key === '=') controls.zoomAt(0.7, cx, cy);
   else if (ev.key === '-' || ev.key === '_') controls.zoomAt(1 / 0.7, cx, cy);
-  else if (ev.key === 'x') { controls.goHome(); before = null; }
+  else if (ev.key === 'z') controls.goHome();
 });
 
 // Reading: the nearest verse to the pointer, found by projecting the points (a few tens of thousands: fine on a move, not every frame).
@@ -117,27 +117,24 @@ function syncHash() {
 function readHash() { const p = new URLSearchParams(location.hash.slice(1)); return { reading: p.has('reading'), v: p.get('v'), q: p.get('q'), w: p.get('w') }; }
 let hover = null, held = false, overCard = false, down = null;
 canvas.addEventListener('pointermove', (e) => { hover = { x: e.clientX, y: e.clientY }; });
-// Dive and walk. A click on a verse frames it with its six kin; a click on one of those kin steps to it, and the
-// steps make a trail. A click on empty ground climbs back out to the view before the dive.
-const walk = []; let before = null;
-function dive(i) {
-  if (!before) before = controls.view();
-  const p = verses.positionOf(i, _p); // down to the verse itself; the threads run out of frame toward their kin
-  controls.flyTo(p.x, p.z, Math.min(controls.goalDistance, EXTENT * 0.32));
-}
-function climbOut() { if (before) { controls.setView(before); before = null; } }
+// Click and walk. A click on a verse holds it, so the card stays put. A click on one of its six kin, on the ground
+// or in the card, steps to it: the camera slides over at its current height and the steps make a trail. A click on
+// empty ground lets go.
+const walk = [];
 function step(i) {
-  const last = walk[walk.length - 1];
-  if (last === undefined || last === i || !kinOf(last).includes(i)) walk.length = 0; // a step off the kin is a new walk
+  const last = walk[walk.length - 1], onward = last !== undefined && last !== i && kinOf(last).includes(i);
+  if (!onward) walk.length = 0; // a step off the kin is a new walk
   if (last !== i) walk.push(i);
-  hold(i); dive(i); syncHash();
+  hold(i);
+  if (onward) { const p = verses.positionOf(i, _p); controls.flyTo(p.x, p.z, controls.goalDistance); }
+  syncHash();
 }
 canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
 canvas.addEventListener('pointerup', (e) => {
   if (!down || controls.dragging || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) { down = null; return; }
   down = null;
   const i = nearestVerse(e.clientX, e.clientY, 14);
-  if (i < 0 || (i === shown && before && walk.length <= 1)) climbOut(); else step(i);
+  if (i < 0) letGo(); else step(i);
 });
 canvas.addEventListener('pointerleave', () => { hover = null; candidate = { i: -1, since: 0 }; });
 // the card stays while the pointer is on it, so its verses can be followed
@@ -392,7 +389,7 @@ async function boot() {
   applyOrder(want.reading ? 0 : 1); order.target = order.value; // the page opens on the terrain; #reading opens on the bands
   syncOrderButtons();
   if (want.w) for (const ref of want.w.split('|')) { const i = refIndex.get(ref); if (i !== undefined) walk.push(i); }
-  if (wanted >= 0) { if (walk[walk.length - 1] !== wanted) walk.length = 0; hold(wanted); dive(wanted); }
+  if (wanted >= 0) { if (walk[walk.length - 1] !== wanted) walk.length = 0; hold(wanted); const p = verses.positionOf(wanted, new THREE.Vector3()); controls.flyTo(p.x, p.z, EXTENT * 0.45); }
   if (want.q) runSearch(want.q);
   let guided = false; try { guided = !!localStorage.getItem('cg-guided'); } catch {}
   if (!location.hash && !guided) { // the first visit opens with the guide, which any move of the hand dismisses
@@ -405,4 +402,4 @@ async function boot() {
   requestAnimationFrame(frame);
 }
 boot().catch((err) => { $('loading').textContent = 'The corpus failed to load. Refresh to try again.'; console.error(err); });
-window.__cg = { scene, camera, controls, terrain, verses, threads, order, setOrder, setKin, hold, letGo, step, climbOut, walk, showGuide, runSearch, clearSearch, get search() { return search; }, get kin() { return kin; }, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };
+window.__cg = { scene, camera, controls, terrain, verses, threads, order, setOrder, setKin, hold, letGo, step, walk, showGuide, runSearch, clearSearch, get search() { return search; }, get kin() { return kin; }, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };
