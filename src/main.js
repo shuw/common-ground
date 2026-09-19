@@ -43,7 +43,7 @@ document.addEventListener('keydown', (ev) => {
   if (ev.metaKey || ev.ctrlKey || ev.altKey || ev.target === qInput) return;
   if (ev.key === '?') showHelp(help.hidden);
   else if (ev.key === '/') { qInput.focus(); qInput.select(); ev.preventDefault(); }
-  else if (ev.key === 'Escape') { if (guideOn) showGuide(false); else if (!help.hidden) showHelp(false); else if (!about.hidden) showAbout(false); else if (query) clearSearch(); else if (shown >= 0) letGo(); else if (reading.mode !== 'off') setReading('off'); }
+  else if (ev.key === 'Escape') { if (guideOn) showGuide(false); else if (!help.hidden) showHelp(false); else if (!about.hidden) showAbout(false); else if (query) clearSearch(); else if (shown >= 0) letGo(); }
   const cx = canvas.clientWidth / 2, cy = canvas.clientHeight / 2, step = controls.goalDistance * 0.12;
   const pan = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[ev.key];
   if (pan) { controls.panBy(...pan); ev.preventDefault(); }
@@ -270,23 +270,20 @@ function placeLandmarks(placed) {
 
 // The reading playhead: one position through every text at once. It plays by itself, a full reading in three
 // minutes, until paused; the line under it names the book each text is in.
-const reading = { pos: 0, mode: 'off', seconds: 180 }; // off until asked; then playing or paused
-const posInput = $('pos'), playBtn = $('play'), stopBtn = $('stop'), whereEl = $('reading').querySelector('.where');
+const reading = { pos: 0, playing: true, seconds: 180 };
+const posInput = $('pos'), playBtn = $('play'), whereEl = $('reading').querySelector('.where');
 let whereKey = '';
 function applyReading() {
-  verses.setRead(reading.pos, reading.mode !== 'off' && !query); // a search has its own light
-  $('reading').classList.toggle('on', reading.mode !== 'off');
+  verses.setRead(reading.pos, !query); // a search has its own light
   if (document.activeElement !== posInput) posInput.value = Math.round(reading.pos * 1000);
-  if (reading.mode === 'off') { whereEl.innerHTML = ''; whereKey = ''; return; }
   const where = textIds.map((t) => { const x = corpus.texts[t], k = Math.min(x.verses - 1, Math.floor(reading.pos * x.verses)); let s = 0; for (const [name, n] of x.books) { if (k < s + n) return [t, name]; s += n; } return [t, '']; });
   const key = where.map((w) => w[1]).join('|');
   if (key !== whereKey) { whereKey = key; whereEl.innerHTML = where.map(([t, name]) => `<span style="color:${corpus.texts[t].colour}">${esc(name)}</span>`).join(''); }
 }
-function setReading(mode) { reading.mode = mode; playBtn.setAttribute('aria-pressed', mode === 'playing'); applyReading(); }
-playBtn.addEventListener('click', () => setReading(reading.mode === 'playing' ? 'paused' : 'playing'));
-stopBtn.addEventListener('click', () => setReading('off'));
-posInput.addEventListener('input', () => { reading.pos = posInput.value / 1000; setReading('paused'); });
-document.addEventListener('keydown', (ev) => { if (!ev.metaKey && !ev.ctrlKey && !ev.altKey && ev.target !== qInput && (ev.key === ' ' || ev.key === 'p')) { setReading(reading.mode === 'playing' ? 'paused' : 'playing'); ev.preventDefault(); } });
+function setPlaying(on) { reading.playing = on; playBtn.setAttribute('aria-pressed', on); }
+playBtn.addEventListener('click', () => setPlaying(!reading.playing));
+posInput.addEventListener('input', () => { reading.pos = posInput.value / 1000; setPlaying(false); applyReading(); });
+document.addEventListener('keydown', (ev) => { if (!ev.metaKey && !ev.ctrlKey && !ev.altKey && ev.target !== qInput && (ev.key === ' ' || ev.key === 'p')) { setPlaying(!reading.playing); ev.preventDefault(); } });
 
 // The morph: 0 is reading order (each book a band), 1 is meaning (the terrain). It plays on load and on the toggle.
 const order = { value: 1, target: 1, from: 1, t0: 0, seconds: 3, wait: 0 };
@@ -342,8 +339,7 @@ function frame() {
     const e = Math.min(1, Math.max(0, (now - order.t0 - order.wait) / order.seconds));
     applyOrder(order.from + (order.target - order.from) * (e < 0.5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2));
   }
-  if (reading.mode === 'playing' && corpus) { reading.pos = (reading.pos + Math.min(0.1, now - lastFrame) / reading.seconds) % 1; applyReading(); }
-  verses.setTime(now); if (terrain.mesh) terrain.mesh.material.uniforms.uTime.value = now;
+  if (reading.playing && corpus) { reading.pos = (reading.pos + Math.min(0.1, now - lastFrame) / reading.seconds) % 1; applyReading(); }
   lastFrame = now;
   placeBandLabels(); placeLandmarks(placeRegionLabels()); placeGuide();
   resetBtn.hidden = controls.goalTarget.lengthSq() < 1e-4 && Math.abs(controls.goalDistance - controls.home.distance) < 1e-3;
@@ -426,4 +422,4 @@ async function boot() {
   requestAnimationFrame(frame);
 }
 boot().catch((err) => { $('loading').textContent = 'The corpus failed to load. Refresh to try again.'; console.error(err); });
-window.__cg = { scene, camera, controls, terrain, verses, threads, order, setOrder, hold, letGo, step, walk, reading, setReading, applyReading, showGuide, runSearch, clearSearch, get search() { return search; }, get kin() { return kin; }, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };
+window.__cg = { scene, camera, controls, terrain, verses, threads, order, setOrder, hold, letGo, step, walk, reading, setPlaying, applyReading, showGuide, runSearch, clearSearch, get search() { return search; }, get kin() { return kin; }, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };
