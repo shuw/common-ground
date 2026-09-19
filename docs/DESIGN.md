@@ -42,6 +42,10 @@ A click on a verse holds it: the card stays while the pointer wanders, until the
 
 The URL hash carries the moment and nothing else: `reading` for the order, `v=<reference>` for a pinned verse (the page opens on it, flown to, with no opening flight), `q=<query>` for a search.
 
+## The reading playhead
+
+One position runs through every text at once, by fraction, a full reading in three minutes, playing by itself until paused (`p`, the button, or a drag on the scrubber). Verses just behind the playhead, the last 4.5% of each text, glow larger and whiter; verses already read stay at 60%; verses ahead sit at 35%. In the meaning view the seven fronts wander the terrain together, each book tracing its own path; in reading order it is a wavefront sweeping left to right. The line under the scrubber names the book each text is in at that moment, in its colour. Darkening the unread verses further was tried and made the map look dead; the levels are set so the map still reads as a whole. A search takes the playhead's light off so the hits are clear.
+
 ## Two orders
 
 Every verse has two places: where it sits in its book, and where its meaning puts it. The page opens on the second, the terrain. Reading order lays each text out as a band with its verses left to right and a seam between its books (names appear once a book is wide enough on screen to carry one). The toggle runs the flight: the terrain sinks and every verse flies to its band, each one leaving a little after the one before it in its book, and back again the books unravel into the landscape. The toggle at the bottom right (`r`, `m`, or space) runs the same flight either way; `#reading` in the URL opens on the bands and stays there.
