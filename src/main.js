@@ -340,7 +340,8 @@ function frame() {
     if (candidate.i >= 0 && now - candidate.since > 0.04) { held = false; showVerse(candidate.i); }
     else if (candidate.i < 0 && !held && now - candidate.since > 0.12) letGo();
   }
-  if (shown >= 0 && kin) threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt);
+  // the threads go the instant the pointer leaves the verse (the card waits a beat); a held verse keeps them
+  if (shown >= 0 && kin && (held || overCard || candidate.i === shown)) threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt);
   else threads.hide();
   threads.setTrail(walk, (j, out) => verses.positionOf(j, out));
   renderer.render(scene, camera);
