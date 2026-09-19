@@ -16,6 +16,16 @@ test('the corpus has every text, and each verse names its text and a reference',
   for (const t of Object.values(corpus.texts)) assert.ok(t.translation && t.source && t.licence && t.colour);
 });
 
+test('each text lists its books in reading order, and they account for every verse', () => {
+  for (const [id, t] of Object.entries(corpus.texts)) {
+    assert.equal(t.books.reduce((s, [, n]) => s + n, 0), t.verses, id);
+    for (const [name, n] of t.books) assert.ok(name && n > 0, `${id} ${name}`);
+  }
+  assert.equal(corpus.texts.torah.books.length, 39); assert.equal(corpus.texts.gospels.books.length, 4);
+  assert.equal(corpus.texts.quran.books.length, 114); assert.equal(corpus.texts.dhamma.books.length, 26);
+  assert.equal(corpus.texts.gita.books.length, 18); assert.equal(corpus.texts.tao.books.length, 81); assert.equal(corpus.texts.analects.books.length, 20);
+});
+
 test('the layout, when present, has one place per verse', { skip: !existsSync('public/data/layout.json') }, () => {
   const layout = JSON.parse(readFileSync('public/data/layout.json', 'utf8'));
   assert.equal(layout.uv.length, corpus.verses.length);

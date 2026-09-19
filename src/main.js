@@ -30,7 +30,7 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// Keys: arrows slide the ground, + and - zoom, 0 goes home; 1, 2 and o pick the order.
+// Keys: arrows slide the ground, + and - zoom, h goes home; r, m and space pick the order.
 const resetBtn = $('reset');
 resetBtn.addEventListener('click', () => controls.goHome());
 const help = $('help'), helpBtn = $('help-btn');
@@ -45,7 +45,7 @@ document.addEventListener('keydown', (ev) => {
   if (pan) { controls.panBy(...pan); ev.preventDefault(); }
   else if (ev.key === '+' || ev.key === '=') controls.zoomAt(0.7, cx, cy);
   else if (ev.key === '-' || ev.key === '_') controls.zoomAt(1 / 0.7, cx, cy);
-  else if (ev.key === '0') controls.goHome();
+  else if (ev.key === 'h') controls.goHome();
 });
 
 // Reading: the nearest verse to the pointer, found by projecting the points (a few tens of thousands: fine on a move, not every frame).
@@ -55,6 +55,7 @@ function nearestVerse(sx, sy, px = 8) {
   const w = canvas.clientWidth, h = canvas.clientHeight, n = verses.meaning.length / 3;
   let best = -1, bd = px * px;
   for (let i = 0; i < n; i++) {
+    if (!verses.isLit(i)) continue;
     verses.positionOf(i, _p).project(camera);
     if (_p.z > 1) continue;
     const dx = (_p.x + 1) / 2 * w - sx, dy = (1 - _p.y) / 2 * h - sy, d = dx * dx + dy * dy;
@@ -68,7 +69,7 @@ function showVerse(i, isPinned) {
   card.style.setProperty('--c', info.colour);
   card.querySelector('.who').textContent = `${info.name} · ${ref}`;
   card.querySelector('.verse').textContent = text;
-  card.querySelector('.tr').textContent = `${info.translation} · neighbourhood ${(layout.mixing[i] * 100).toFixed(0)}% other texts`;
+  card.querySelector('.tr').textContent = `${info.translation} · kinship ${(verses.kin[i] * 100).toFixed(0)}%`;
   card.hidden = !help.hidden; card.classList.toggle('pinned', isPinned);
 }
 let hover = null, pinned = -1, down = null;
@@ -93,9 +94,9 @@ function syncOrderButtons() { for (const b of document.querySelectorAll('#order 
 document.querySelectorAll('#order button').forEach((b) => b.addEventListener('click', () => setOrder(b.dataset.order === 'meaning')));
 document.addEventListener('keydown', (ev) => {
   if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
-  if (ev.key === 'o') setOrder(order.target !== 1);
-  else if (ev.key === '1') setOrder(false);
-  else if (ev.key === '2') setOrder(true);
+  if (ev.key === ' ') { setOrder(order.target !== 1); ev.preventDefault(); }
+  else if (ev.key === 'r') setOrder(false);
+  else if (ev.key === 'm') setOrder(true);
 });
 function applyOrder(m) {
   order.value = m;
@@ -103,7 +104,16 @@ function applyOrder(m) {
   terrain.mesh.scale.y = Math.max(0.0001, m);
   terrain.mesh.material.uniforms.uRise.value = m;
 }
-const bandLabels = [];
+// Kinship: the slider dims every verse whose neighbourhood is less shared than the threshold.
+const kinInput = $('kin');
+function setKin(k) { k = Math.min(1, Math.max(0, k)); kinInput.value = k; verses.setKin(k); $('kin-out').textContent = k === 0 ? 'every verse' : k >= 1 ? 'only the most shared' : `kinship above ${Math.round(k * 100)}%`; }
+kinInput.addEventListener('input', () => setKin(+kinInput.value));
+document.addEventListener('keydown', (ev) => {
+  if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+  if (ev.key === ']') setKin(+kinInput.value + 0.1); else if (ev.key === '[') setKin(+kinInput.value - 0.1);
+});
+const bandLabels = [], bookLabels = [];
+let labelKey = '';
 function placeBandLabels() {
   const w = canvas.clientWidth, h = canvas.clientHeight, narrow = w < 640;
   const fade = Math.max(0, 1 - order.value * 3); // gone by the time a third of the flight is done
@@ -114,6 +124,18 @@ function placeBandLabels() {
     if (!crowded) lastY = y;
     el.style.transform = `translate(${((_p.x + 1) / 2 * w).toFixed(1)}px, ${y.toFixed(1)}px) ${narrow ? 'translate(0, -120%)' : 'translate(-100%, -50%)'}`;
     el.style.opacity = crowded || _p.z >= 1 ? 0 : fade;
+  }
+  // book names, once a book is wide enough on screen to carry its name; only touched when the view changed
+  const key = `${controls.target.x.toFixed(3)},${controls.target.z.toFixed(3)},${controls.distance.toFixed(3)},${order.value.toFixed(3)},${w}`;
+  if (key === labelKey) return; labelKey = key;
+  const show = order.value < 0.4;
+  for (const { el, u0, u1, v, width } of bookLabels) {
+    if (!show) { el.style.opacity = 0; continue; }
+    place(u0, v, 0.01, _p).project(camera); const x0 = (_p.x + 1) / 2 * w, z0 = _p.z;
+    place(u1, v, 0.01, _p).project(camera); const x1 = (_p.x + 1) / 2 * w, y = (1 - _p.y) / 2 * h;
+    const fits = x1 - x0 > width + 8 && z0 < 1 && _p.z < 1 && x1 > 0 && x0 < w;
+    el.style.opacity = fits ? fade : 0;
+    if (fits) el.style.transform = `translate(${((x0 + x1) / 2).toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -100%)`;
   }
 }
 
@@ -141,6 +163,10 @@ async function boot() {
   scene.add(terrain.build(layout, RELIEF));
   scene.add(verses.build(corpus, layout, (u, v) => terrain.heightAt(u, v), pixelRatio));
   for (const [k, b] of Object.entries(verses.bands)) { const el = document.createElement('div'); el.className = 'band'; el.textContent = corpus.texts[k].name; el.style.color = corpus.texts[k].colour; $('labels').appendChild(el); bandLabels.push({ el, u: 0.05, v: b.mid }); }
+  for (const [k, list] of Object.entries(verses.books)) {
+    for (const b of list) { const el = document.createElement('div'); el.className = 'book'; el.textContent = b.name; el.style.color = corpus.texts[k].colour; $('labels').appendChild(el); bookLabels.push({ el, u0: b.u0, u1: b.u1, v: verses.bands[k].mid - verses.bands[k].thick / 2 - 0.004, width: b.name.length * 6.2 }); }
+  }
+  setKin(0);
   applyOrder(0);
   if (location.hash === '#reading') order.target = 0; else order.t0 = performance.now() / 1000; // the opening: the books unravel into the landscape
   syncOrderButtons();
@@ -149,4 +175,4 @@ async function boot() {
   requestAnimationFrame(frame);
 }
 boot().catch((err) => { $('loading').textContent = 'The corpus failed to load. Refresh to try again.'; console.error(err); });
-window.__cg = { scene, camera, controls, terrain, verses, order, setOrder, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };
+window.__cg = { scene, camera, controls, terrain, verses, order, setOrder, setKin, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };
