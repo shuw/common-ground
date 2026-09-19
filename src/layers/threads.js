@@ -21,13 +21,13 @@ export class ThreadsLayer {
     mg.setAttribute('aBig', new THREE.BufferAttribute(new Float32Array(MAX + 1), 1));
     mg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
     this.markMaterial = new THREE.ShaderMaterial({
-      uniforms: { uPixelRatio: { value: 1 }, uT: { value: 1 } }, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
+      uniforms: { uPixelRatio: { value: 1 }, uT: { value: 1 }, uOpacity: { value: 1 } }, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
       vertexShader: `attribute float aBig; uniform float uPixelRatio, uT; varying vec3 vColor; varying float vBig;
         void main() { vColor = color; vBig = aBig; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv;
           float swell = 1.0 + 0.5 * (1.0 - uT) * aBig; gl_PointSize = max(9.0 + 5.0 * aBig, (34.0 + 22.0 * aBig) * swell * uPixelRatio / -mv.z); }`,
-      fragmentShader: `varying vec3 vColor; varying float vBig;
+      fragmentShader: `uniform float uOpacity; varying vec3 vColor; varying float vBig;
         void main() { float d = length(gl_PointCoord - 0.5) * 2.0; if (d > 1.0) discard; float core = 1.0 - smoothstep(0.0, 0.35, d); float glow = pow(1.0 - d, 2.2) * 0.55;
-          gl_FragColor = vec4(mix(vColor, vec3(1.0), core * 0.7), (core + glow) * (0.8 + 0.2 * vBig)); }`,
+          gl_FragColor = vec4(mix(vColor, vec3(1.0), core * 0.7), (core + glow) * (0.8 + 0.2 * vBig) * uOpacity); }`,
     });
     this.marks = new THREE.Points(mg, this.markMaterial); this.marks.frustumCulled = false; this.marks.renderOrder = 4; this.group.add(this.marks);
     // a ring that spreads from the verse and fades, the moment it is picked
@@ -65,8 +65,8 @@ export class ThreadsLayer {
 
   /** Draw arcs from verse i to each verse in kin (skipping -1), positions from positionOf, colours per kin;
    *  t is the seconds since the verse was picked: the arcs grow out of it, one a little after the other. */
-  show(i, kin, colours, colour, positionOf, t) {
-    const progress = Math.min(1, t / 0.16), mp = this.marks.geometry.getAttribute('position'), mc = this.marks.geometry.getAttribute('color'), mb = this.marks.geometry.getAttribute('aBig');
+  show(i, kin, colours, colour, positionOf, t, recede = 0) {
+    const progress = Math.min(1, t / 0.16) * (1 - Math.min(1, recede / 0.16)), mp = this.marks.geometry.getAttribute('position'), mc = this.marks.geometry.getAttribute('color'), mb = this.marks.geometry.getAttribute('aBig');
     positionOf(i, this.a); this.c.set(colour);
     mp.setXYZ(0, this.a.x, this.a.y + 0.01, this.a.z); mc.setXYZ(0, this.c.r, this.c.g, this.c.b); mb.setX(0, 1);
     let k = 0, n = 0, m = 1;
@@ -88,6 +88,7 @@ export class ThreadsLayer {
     this.group.children[0].visible = this.group.children[1].visible = k > 0;
     this.marks.geometry.setDrawRange(0, m); mp.needsUpdate = true; mc.needsUpdate = true; mb.needsUpdate = true;
     this.markMaterial.uniforms.uT.value = Math.min(1, t / 0.3);
+    this.markMaterial.uniforms.uOpacity.value = 1 - Math.min(1, recede / 0.16); this.marks.visible = recede < 0.16;
     const pt = t / 0.3;
     if (pt < 1) { this.pulse.geometry.getAttribute('position').setXYZ(0, this.a.x, this.a.y + 0.01, this.a.z); this.pulse.geometry.getAttribute('position').needsUpdate = true; this.pulseMaterial.uniforms.uT.value = pt; this.pulseMaterial.uniforms.uColor.value.set(colour); }
     this.pulse.visible = pt < 1;

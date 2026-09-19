@@ -95,6 +95,7 @@ function showVerse(i) {
   if (i !== shown) { shown = i; shownAt = performance.now() / 1000; card.classList.remove('enter'); void card.offsetWidth; card.classList.add('enter'); syncHash(); }
 }
 let shown = -1, shownAt = 0; // the verse the card and threads are about, and when it arrived
+let last = { i: -1, at: 0, left: 0 }; // the verse whose threads are still receding
 let candidate = { i: -1, since: 0 }; // the verse under the pointer, waiting a moment to be sure
 function hold(i) { held = true; showVerse(i); }
 card.addEventListener('click', async (e) => {
@@ -340,9 +341,13 @@ function frame() {
     if (candidate.i >= 0 && now - candidate.since > 0.04) { held = false; showVerse(candidate.i); }
     else if (candidate.i < 0 && !held && now - candidate.since > 0.12) letGo();
   }
-  // the threads go the instant the pointer leaves the verse (the card waits a beat); a held verse keeps them
-  if (shown >= 0 && kin && (held || overCard || candidate.i === shown)) threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt);
-  else threads.hide();
+  // the threads recede into the verse the moment the pointer leaves it (the card waits a beat); a held verse keeps them
+  if (shown >= 0 && kin && (held || overCard || candidate.i === shown)) { last = { i: shown, at: shownAt, left: 0 }; threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt); }
+  else if (last.i >= 0 && kin) {
+    if (!last.left) last.left = now;
+    if (now - last.left < 0.16) threads.show(last.i, kinOf(last.i), textColours, corpus.texts[corpus.verses[last.i][0]].colour, (j, out) => verses.positionOf(j, out), last.left - last.at, now - last.left);
+    else { threads.hide(); last.i = -1; }
+  } else threads.hide();
   threads.setTrail(walk, (j, out) => verses.positionOf(j, out));
   renderer.render(scene, camera);
 }
