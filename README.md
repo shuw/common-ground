@@ -15,4 +15,4 @@ npm run dev
 
 ## Using it
 
-The page opens with each text laid out in reading order and unravels into the terrain. Hover a verse to read it, click to pin it. Drag to slide the ground, scroll or pinch to zoom toward the pointer; arrow keys and `+`/`-` do the same, `0` (or the reset button) goes back to the whole ground. The toggle at the bottom right flies between reading order and meaning: `1`, `2`, or `o` to switch. `#reading` in the URL opens on the bands.
+The page opens with each text laid out in reading order and unravels into the terrain. Hover a verse to read it, click to pin it. Drag to slide the ground, scroll or pinch to zoom toward the pointer; arrow keys and `+`/`-` do the same, `0` (or the reset button) goes back to the whole ground. The toggle at the bottom right flies between reading order and meaning: `1`, `2`, or `o` to switch. `?` lists every key; `Esc` lets go of a pinned verse. `#reading` in the URL opens on the bands.

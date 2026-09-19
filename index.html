@@ -15,8 +15,22 @@
     <p>Every verse of seven founding texts, placed by what it means.</p>
   </div>
   <div id="labels"></div>
-  <button id="reset" hidden title="Back to the whole ground · 0">reset view</button>
-  <nav id="order" aria-label="Order"><button data-order="reading" aria-pressed="true" title="Each book in reading order · o">reading order</button><button data-order="meaning" aria-pressed="false" title="Every verse placed by its meaning · o">by meaning</button></nav>
+  <button id="reset" hidden title="Back to the whole ground">reset view <kbd>0</kbd></button>
+  <nav id="order" aria-label="Order"><button data-order="reading" aria-pressed="true" title="Each book in reading order">reading order <kbd>1</kbd></button><button data-order="meaning" aria-pressed="false" title="Every verse placed by its meaning">by meaning <kbd>2</kbd></button></nav>
+  <button id="help-btn" title="Keyboard shortcuts">keys <kbd>?</kbd></button>
+  <div id="help" hidden role="dialog" aria-label="Keyboard shortcuts">
+    <h2>Keys</h2>
+    <dl>
+      <dt><kbd>1</kbd> <kbd>2</kbd></dt><dd>reading order, by meaning</dd>
+      <dt><kbd>o</kbd></dt><dd>fly between the two</dd>
+      <dt><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd></dt><dd>slide the ground</dd>
+      <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>zoom in, zoom out</dd>
+      <dt><kbd>0</kbd></dt><dd>the whole ground again</dd>
+      <dt><kbd>esc</kbd></dt><dd>let go of a pinned verse</dd>
+      <dt><kbd>?</kbd></dt><dd>this list</dd>
+    </dl>
+    <p>Drag to slide the ground, scroll or pinch to zoom toward the pointer. Hover a verse to read it, click to keep it.</p>
+  </div>
   <div id="legend"></div>
   <div id="card" hidden><div class="who"></div><p class="verse"></p><div class="tr"></div></div>
   <div id="loading">Common Ground, loading…</div>

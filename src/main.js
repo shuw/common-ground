@@ -33,8 +33,13 @@ resize();
 // Keys: arrows slide the ground, + and - zoom, 0 goes home; 1, 2 and o pick the order.
 const resetBtn = $('reset');
 resetBtn.addEventListener('click', () => controls.goHome());
+const help = $('help'), helpBtn = $('help-btn');
+function showHelp(on) { help.hidden = !on; helpBtn.setAttribute('aria-expanded', on); if (on) card.hidden = true; }
+helpBtn.addEventListener('click', () => showHelp(help.hidden));
 document.addEventListener('keydown', (ev) => {
   if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+  if (ev.key === '?') showHelp(help.hidden);
+  else if (ev.key === 'Escape') { if (!help.hidden) showHelp(false); else if (pinned >= 0) { pinned = -1; card.hidden = true; } }
   const cx = canvas.clientWidth / 2, cy = canvas.clientHeight / 2, step = controls.goalDistance * 0.12;
   const pan = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[ev.key];
   if (pan) { controls.panBy(...pan); ev.preventDefault(); }
@@ -64,7 +69,7 @@ function showVerse(i, isPinned) {
   card.querySelector('.who').textContent = `${info.name} · ${ref}`;
   card.querySelector('.verse').textContent = text;
   card.querySelector('.tr').textContent = `${info.translation} · neighbourhood ${(layout.mixing[i] * 100).toFixed(0)}% other texts`;
-  card.hidden = false; card.classList.toggle('pinned', isPinned);
+  card.hidden = !help.hidden; card.classList.toggle('pinned', isPinned);
 }
 let hover = null, pinned = -1, down = null;
 canvas.addEventListener('pointermove', (e) => { hover = { x: e.clientX, y: e.clientY }; });

@@ -28,3 +28,17 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
 #reset { position: fixed; right: 16px; bottom: calc(66px + env(safe-area-inset-bottom, 0px)); font: inherit; font-family: var(--serif); font-size: 14px; padding: 5px 12px; border-radius: 999px; border: 1px solid rgba(215,180,106,0.45); background: rgba(15,19,22,0.7); color: var(--dim); cursor: pointer; }
 #reset:hover { color: var(--bone); }
 @media (max-width: 640px) { #reset { left: 12px; right: auto; bottom: calc(62px + env(safe-area-inset-bottom, 0px)); } }
+kbd { font-family: var(--mono); font-size: 10px; line-height: 1; padding: 2px 5px 3px; border-radius: 4px; border: 1px solid var(--line); color: var(--faint); background: rgba(255,255,255,0.04); vertical-align: 1px; }
+#order button kbd, #reset kbd { margin-left: 3px; }
+#order button[aria-pressed="true"] kbd { color: #1a1006; border-color: rgba(26,16,6,0.35); background: rgba(26,16,6,0.1); }
+#help-btn { position: fixed; right: 16px; top: calc(16px + env(safe-area-inset-top, 0px)); padding: 5px 10px 5px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--dim); font: inherit; font-family: var(--serif); font-size: 15px; cursor: pointer; z-index: 3; }
+#help-btn kbd { margin-left: 3px; }
+#help-btn:hover, #help-btn[aria-expanded="true"] { color: var(--bone); border-color: var(--accent); }
+#help { position: fixed; right: 16px; top: calc(56px + env(safe-area-inset-top, 0px)); width: min(300px, calc(100% - 32px)); padding: 14px 18px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; z-index: 3; }
+#help h2 { font-family: var(--serif); font-weight: 500; font-size: 18px; margin: 0 0 8px; }
+#help dl { display: grid; grid-template-columns: auto 1fr; gap: 7px 14px; margin: 0; align-items: baseline; }
+#help dt { white-space: nowrap; display: flex; gap: 3px; }
+#help dd { margin: 0; color: var(--dim); }
+#help p { margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--line); color: var(--dim); font-size: 13px; }
+@media (max-width: 640px), (pointer: coarse) { #order kbd, #reset kbd, #help-btn { display: none; } }
+@media (max-width: 640px) { #card:not([hidden]) ~ #help-btn { display: none; } }
