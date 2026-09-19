@@ -16,7 +16,7 @@ The texts, to start: the Hebrew Bible, the Gospels, the Quran, the Bhagavad Gita
 
 ## Kinship
 
-A verse's kinship is its mixing score against chance: the share of its fifteen nearest neighbours that come from other texts, divided by the share a shuffle would give its text, capped at one. Without the division a small text is shared just for being small. In reading order every verse shines by its kinship, so a band reads as a strip chart of where its book speaks to the others: Psalms, Job and the prophets glow, Leviticus and Numbers go dark, the Gospels glow almost throughout. The kinship slider (or `[` and `]`) sets a threshold below which verses all but go out, in either order; the hit test ignores a dimmed verse.
+A verse's kinship is its mixing score against chance: the share of its fifteen nearest neighbours that come from other texts, divided by the share a shuffle would give its text, capped at one. Without the division a small text is shared just for being small. In reading order every verse shines by its kinship, so a band reads as a strip chart of where its book speaks to the others: Psalms, Job and the prophets glow, Leviticus and Numbers go dark, the Gospels glow almost throughout. A kinship slider that dimmed verses below a threshold was built and removed once the reading playhead arrived: two dimming controls at the bottom were one too many, and the reading-order brightness already tells the story. The threshold uniform remains in the shader at zero.
 
 ## Kin, search and regions
 
@@ -44,7 +44,7 @@ The URL hash carries the moment and nothing else: `reading` for the order, `v=<r
 
 ## The reading playhead
 
-One position runs through every text at once, by fraction, a full reading in three minutes, playing by itself until paused (`p`, the button, or a drag on the scrubber). Verses just behind the playhead, the last 4.5% of each text, glow larger and whiter; verses already read stay at 60%; verses ahead sit at 35%. In the meaning view the seven fronts wander the terrain together, each book tracing its own path; in reading order it is a wavefront sweeping left to right. The line under the scrubber names the book each text is in at that moment, in its colour. Darkening the unread verses further was tried and made the map look dead; the levels are set so the map still reads as a whole. A search takes the playhead's light off so the hits are clear.
+One position runs through every text at once, by fraction, a full reading in three minutes, playing by itself until paused (`p`, the button, or a drag on the scrubber). It sits at the bottom centre. Verses just behind the playhead, the last 4.5% of each text, glow larger and whiter; verses already read stay at 60%; verses ahead sit at 35%. In the meaning view the seven fronts wander the terrain together, each book tracing its own path; in reading order it is a wavefront sweeping left to right. The line under the scrubber names the book each text is in at that moment, in its colour. Darkening the unread verses further was tried and made the map look dead; the levels are set so the map still reads as a whole. A search takes the playhead's light off so the hits are clear.
 
 ## Two orders
 

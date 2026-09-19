@@ -303,14 +303,6 @@ function applyOrder(m) {
   terrain.mesh.scale.y = Math.max(0.0001, m);
   terrain.mesh.material.uniforms.uRise.value = m;
 }
-// Kinship: the slider dims every verse whose neighbourhood is less shared than the threshold.
-const kinInput = $('kin');
-function setKin(k) { k = Math.min(1, Math.max(0, k)); kinInput.value = k; verses.setKin(k); $('kin-out').textContent = k === 0 ? 'every verse' : k >= 1 ? 'only the most shared' : `kinship above ${Math.round(k * 100)}%`; }
-kinInput.addEventListener('input', () => setKin(+kinInput.value));
-document.addEventListener('keydown', (ev) => {
-  if (ev.metaKey || ev.ctrlKey || ev.altKey || ev.target === qInput) return;
-  if (ev.key === ']') setKin(+kinInput.value + 0.1); else if (ev.key === '[') setKin(+kinInput.value - 0.1);
-});
 const bandLabels = [], bookLabels = [];
 let labelKey = '';
 function placeBandLabels() {
@@ -412,7 +404,7 @@ async function boot() {
     $('labels').appendChild(el); landmarks.push({ el, i, w: name.length * 6.2 + 18 });
   }
   about.querySelector('.texts').innerHTML = textIds.map((t) => { const x = corpus.texts[t]; return `<li><i style="background:${x.colour}"></i><b>${x.name}</b> · ${esc(x.translation)} · <a href="${x.url}" target="_blank" rel="noopener">${esc(x.source)}</a> · ${x.licence} · ${x.verses.toLocaleString()} verses</li>`; }).join('');
-  setKin(0); applyReading();
+  applyReading();
   const want = readHash(), wanted = want.v ? (refIndex.get(want.v) ?? -1) : -1;
   applyOrder(want.reading ? 0 : 1); order.target = order.value; // the page opens on the terrain; #reading opens on the bands
   syncOrderButtons();
@@ -430,4 +422,4 @@ async function boot() {
   requestAnimationFrame(frame);
 }
 boot().catch((err) => { $('loading').textContent = 'The corpus failed to load. Refresh to try again.'; console.error(err); });
-window.__cg = { scene, camera, controls, terrain, verses, threads, order, setOrder, setKin, hold, letGo, step, walk, reading, setPlaying, applyReading, showGuide, runSearch, clearSearch, get search() { return search; }, get kin() { return kin; }, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };
+window.__cg = { scene, camera, controls, terrain, verses, threads, order, setOrder, hold, letGo, step, walk, reading, setPlaying, applyReading, showGuide, runSearch, clearSearch, get search() { return search; }, get kin() { return kin; }, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };
