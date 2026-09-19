@@ -89,9 +89,10 @@ function showVerse(i) {
   card.querySelector('.tr').innerHTML = `${esc(info.translation)} · kinship ${(verses.kin[i] * 100).toFixed(0)}% · <a href="${info.url}" target="_blank" rel="noopener">source ↗</a> · <button class="link" type="button" title="Copy a link to this verse">copy link</button>`;
   const prev = i > 0 && corpus.verses[i - 1][0] === t ? i - 1 : -1, next = i + 1 < corpus.verses.length && corpus.verses[i + 1][0] === t ? i + 1 : -1;
   const around = `<div class="around">${prev >= 0 ? `<button data-verse="${prev}">‹ ${esc(corpus.verses[prev][1])}</button>` : '<span></span>'}${next >= 0 ? `<button data-verse="${next}">${esc(corpus.verses[next][1])} ›</button>` : ''}</div>`;
-  let n = 0; // each kin line arrives as its thread lands: the n-th thread reaches at 200 ms + 10 ms per step
-  const list = kinOf(i).map((j, k) => j < 0 ? '' : `<li style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b>${esc(corpus.verses[j][1])}</b><span>${esc(corpus.verses[j][2])}</span></button></li>`).join('');
-  card.querySelector('.more').innerHTML = `${around}<div class="kinhead">nearest in each other text</div><ul class="kin">${list}</ul>`;
+  let n = 0; // each kin card arrives as its thread lands: the n-th thread reaches at 200 ms + 10 ms per step
+  const kins = kinOf(i).map((j, k) => j < 0 ? '' : `<div class="k" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}</b><span>${esc(corpus.verses[j][2])}</span></button></div>`).join('');
+  card.querySelector('.more').innerHTML = around;
+  card.querySelector('.kins').innerHTML = kins;
   card.hidden = !(help.hidden && about.hidden);
   if (i !== shown) { shown = i; shownAt = performance.now() / 1000; card.classList.remove('enter'); void card.offsetWidth; card.classList.add('enter'); syncHash(); }
 }
