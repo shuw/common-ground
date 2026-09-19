@@ -98,6 +98,8 @@ kbd { font-family: var(--mono); font-size: 10px; line-height: 1; padding: 2px 5p
 @media (max-width: 640px) { #labels .landmark { font-size: 10px; } }
 #card.enter .main { animation: card-in 0.1s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
 #card.enter .k { animation: kin-in 0.14s cubic-bezier(0.2, 0.8, 0.3, 1) both; animation-delay: calc(0.2s + var(--n, 0) * 10ms); }
+#card.enter .kins::before, #card.enter .k::before { animation: fade-in 0.2s 0.42s both; } /* the spine and its ties come once the last kin is in */
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 #card:not(.enter) .k { opacity: 1; }
 @keyframes kin-in { from { opacity: 0; transform: translateX(-8px); } to { opacity: 1; transform: none; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
