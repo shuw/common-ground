@@ -29,18 +29,21 @@ nn = NearestNeighbors(n_neighbors=16, metric='cosine').fit(E)
 _, idx = nn.kneighbors(E)
 ids_a = np.array(ids)
 mixing = (ids_a[idx[:, 1:]] != ids_a[:, None]).mean(axis=1)
-print('neighbourhood mixing (share of 15 nearest neighbours from another text):')
+print('neighbourhood mixing: share of 15 nearest neighbours from another text, and against chance (1 = as mixed as a shuffle)')
 for t in texts:
     m = mixing[ids_a == t]
-    if len(m): print(f'  {corpus["texts"][t]["name"]:14s} mean {m.mean():.2f}  share of verses with >= 1/3 foreign neighbours {(m >= 1 / 3).mean():.2f}')
+    if not len(m): continue
+    chance = 1 - len(m) / len(verses)  # a text's share of foreign neighbours if verses were shuffled
+    print(f'  {corpus["texts"][t]["name"]:14s} foreign {m.mean():.2f}  chance {chance:.2f}  ratio {m.mean() / chance:.2f}')
 
 import umap
 t0 = time.time()
 reducer = umap.UMAP(n_neighbors=30, min_dist=0.08, metric='cosine', random_state=11)
 XY = reducer.fit_transform(E)
 print(f'umap in {time.time() - t0:.0f}s')
-lo, hi = XY.min(axis=0), XY.max(axis=0)
-UV = (XY - lo) / (hi - lo) * 0.92 + 0.04  # a margin inside the unit square
+# a few outlying islands would squash the mass into a corner: scale by the middle 99% and clamp the rest to the margin
+lo, hi = np.percentile(XY, 0.5, axis=0), np.percentile(XY, 99.5, axis=0)
+UV = np.clip((XY - lo) / (hi - lo), -0.03, 1.03) * 0.92 + 0.04
 
 # density on a grid, for the terrain
 G = 256
