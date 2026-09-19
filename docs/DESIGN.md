@@ -32,7 +32,11 @@ The three dimensions are explained on the scene rather than in a paragraph: a ru
 
 ## Hover
 
-Every verse's place on screen is projected once per view (the cache is keyed on the camera matrix, the morph value and the canvas size), so a pointer move is a plain loop over 34,000 screen points rather than 34,000 projections. A verse shows once the pointer has rested on it for 70 ms and is let go only after the pointer has been off every verse for 150 ms, so neighbouring points do not flicker; the card stays while the pointer is on it, so the kin it lists can be followed, and a verse reached that way is held until the pointer finds another. There is no click: the hash always names the verse in hand. When one is picked the card slides in, a ring spreads from the point, the verse and its six kin light up as bright marks, and six fine glowing arcs grow out to them, each a little after the last, all inside a quarter of a second.
+Every verse's place on screen is projected once per view (the cache is keyed on the camera matrix, the morph value and the canvas size), so a pointer move is a plain loop over 34,000 screen points rather than 34,000 projections. A verse shows once the pointer has rested on it for 70 ms and is let go only after the pointer has been off every verse for 150 ms, so neighbouring points do not flicker; the card stays while the pointer is on it, so the kin it lists can be followed, and a verse reached that way is held until the pointer finds another. The hash always names the verse in hand.
+
+## Dive and walk
+
+A click on a verse dives to it: the camera centres on the verse and comes down to a third of the ground's width, or stays closer if it already was, so the threads run out of frame toward their kin. Framing all seven was tried first and rejected, since the kin span the map and the frame was the whole ground. A click on one of those kin steps to it, frames its kin in turn, and the steps make a trail drawn as a dim gold line; a click on a verse that is not a kin of the last step starts a new walk. A click on empty ground climbs back out to the view before the dive. The walk rides in the hash (`w=<ref>|<ref>…`, the last 24 steps; references hold dots and commas but never a bar) so it can be shared, and a shared link opens on its last verse, dived. When one is picked the card slides in, a ring spreads from the point, the verse and its six kin light up as bright marks, and six fine glowing arcs grow out to them, each a little after the last, all inside a quarter of a second.
 
 ## Permalinks
 

@@ -35,7 +35,7 @@ resize();
 
 // Keys: arrows slide the ground, + and - zoom, x resets the view; r, m and space pick the order.
 const resetBtn = $('reset');
-resetBtn.addEventListener('click', () => controls.goHome());
+resetBtn.addEventListener('click', () => { controls.goHome(); before = null; });
 const help = $('help'), helpBtn = $('help-btn');
 function showHelp(on) { help.hidden = !on; helpBtn.setAttribute('aria-expanded', on); if (on) { card.hidden = true; about.hidden = true; aboutBtn.setAttribute('aria-expanded', false); } }
 helpBtn.addEventListener('click', () => showHelp(help.hidden));
@@ -49,7 +49,7 @@ document.addEventListener('keydown', (ev) => {
   if (pan) { controls.panBy(...pan); ev.preventDefault(); }
   else if (ev.key === '+' || ev.key === '=') controls.zoomAt(0.7, cx, cy);
   else if (ev.key === '-' || ev.key === '_') controls.zoomAt(1 / 0.7, cx, cy);
-  else if (ev.key === 'x') controls.goHome();
+  else if (ev.key === 'x') { controls.goHome(); before = null; }
 });
 
 // Reading: the nearest verse to the pointer, found by projecting the points (a few tens of thousands: fine on a move, not every frame).
@@ -98,24 +98,47 @@ let shown = -1, shownAt = 0; // the verse the card and threads are about, and wh
 let candidate = { i: -1, since: 0 }; // the verse under the pointer, waiting a moment to be sure
 function hold(i) { held = true; showVerse(i); }
 card.addEventListener('click', async (e) => {
-  const b = e.target.closest('[data-verse]'); if (b) return hold(+b.dataset.verse);
+  const b = e.target.closest('[data-verse]'); if (b) return step(+b.dataset.verse);
   const l = e.target.closest('.link');
   if (l) { try { await navigator.clipboard.writeText(location.href); l.textContent = 'copied'; } catch { l.textContent = location.href; } }
 });
-function letGo() { held = false; shown = -1; card.hidden = true; threads.hide(); syncHash(); }
+function letGo() { held = false; shown = -1; walk.length = 0; card.hidden = true; threads.hide(); syncHash(); }
 
 // The URL hash carries the moment: #reading for the order, v=<reference> for the verse in hand.
 function syncHash() {
   const parts = [];
   if (order.target === 0) parts.push('reading');
   if (shown >= 0) parts.push('v=' + encodeURIComponent(corpus.verses[shown][1]));
+  if (walk.length > 1) parts.push('w=' + walk.slice(-24).map((i) => encodeURIComponent(corpus.verses[i][1])).join('|')); // references hold dots and commas; a bar they never hold
   if (query) parts.push('q=' + encodeURIComponent(query));
   const h = parts.length ? '#' + parts.join('&') : '';
   if (h !== location.hash) history.replaceState(null, '', location.pathname + location.search + h);
 }
-function readHash() { const p = new URLSearchParams(location.hash.slice(1)); return { reading: p.has('reading'), v: p.get('v'), q: p.get('q') }; }
-let hover = null, held = false, overCard = false;
+function readHash() { const p = new URLSearchParams(location.hash.slice(1)); return { reading: p.has('reading'), v: p.get('v'), q: p.get('q'), w: p.get('w') }; }
+let hover = null, held = false, overCard = false, down = null;
 canvas.addEventListener('pointermove', (e) => { hover = { x: e.clientX, y: e.clientY }; });
+// Dive and walk. A click on a verse frames it with its six kin; a click on one of those kin steps to it, and the
+// steps make a trail. A click on empty ground climbs back out to the view before the dive.
+const walk = []; let before = null;
+function dive(i) {
+  if (!before) before = controls.view();
+  const p = verses.positionOf(i, _p); // down to the verse itself; the threads run out of frame toward their kin
+  controls.flyTo(p.x, p.z, Math.min(controls.goalDistance, EXTENT * 0.32));
+}
+function climbOut() { if (before) { controls.setView(before); before = null; } }
+function step(i) {
+  const last = walk[walk.length - 1];
+  if (last === undefined || last === i || !kinOf(last).includes(i)) walk.length = 0; // a step off the kin is a new walk
+  if (last !== i) walk.push(i);
+  hold(i); dive(i); syncHash();
+}
+canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
+canvas.addEventListener('pointerup', (e) => {
+  if (!down || controls.dragging || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) { down = null; return; }
+  down = null;
+  const i = nearestVerse(e.clientX, e.clientY, 14);
+  if (i < 0 || (i === shown && before && walk.length <= 1)) climbOut(); else step(i);
+});
 canvas.addEventListener('pointerleave', () => { hover = null; candidate = { i: -1, since: 0 }; });
 // the card stays while the pointer is on it, so its verses can be followed
 card.addEventListener('pointerenter', () => { overCard = true; });
@@ -136,8 +159,7 @@ function renderResults(how, ids, extra = '') {
 }
 results.addEventListener('click', (e) => {
   const b = e.target.closest('[data-verse]'); if (!b) return;
-  const j = +b.dataset.verse; hold(j);
-  const p = verses.positionOf(j, _p); controls.flyTo(p.x, p.z, Math.min(controls.goalDistance, EXTENT * 0.5));
+  step(+b.dataset.verse);
 });
 async function runSearch(q) {
   query = q; qInput.value = q; clearBtn.hidden = false; const run = ++searchRun; syncHash();
@@ -323,6 +345,7 @@ function frame() {
   }
   if (shown >= 0 && kin) threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt);
   else threads.hide();
+  threads.setTrail(walk, (j, out) => verses.positionOf(j, out));
   renderer.render(scene, camera);
 }
 
@@ -335,7 +358,7 @@ async function boot() {
   textIds = Object.keys(corpus.texts); textColours = textIds.map((t) => corpus.texts[t].colour);
   const N = corpus.verses.length;
   kin = { idx: new Uint16Array(kinBuf, 0, N * 7), sim: new Uint8Array(kinBuf, N * 7 * 2, N * 7) };
-  scene.add(threads.group); threads.resize(canvas.clientWidth, canvas.clientHeight, pixelRatio);
+  scene.add(threads.group); scene.add(threads.trail); threads.resize(canvas.clientWidth, canvas.clientHeight, pixelRatio);
   scene.add(terrain.build(layout, RELIEF));
   scene.add(verses.build(corpus, layout, (u, v) => terrain.heightAt(u, v), pixelRatio));
   for (const [k, b] of Object.entries(verses.bands)) { const el = document.createElement('div'); el.className = 'band'; el.textContent = corpus.texts[k].name; el.style.color = corpus.texts[k].colour; $('labels').appendChild(el); bandLabels.push({ el, u: 0.05, v: b.mid }); }
@@ -360,7 +383,7 @@ async function boot() {
   for (const [ref, name] of marks) {
     const i = refIndex.get(ref); if (i === undefined) { console.warn('no such landmark', ref); continue; }
     const el = document.createElement('button'); el.className = 'landmark'; el.textContent = name; el.title = ref; el.style.color = corpus.texts[corpus.verses[i][0]].colour;
-    el.addEventListener('click', () => hold(i));
+    el.addEventListener('click', () => step(i));
     $('labels').appendChild(el); landmarks.push({ el, i, w: name.length * 6.2 + 18 });
   }
   about.querySelector('.texts').innerHTML = textIds.map((t) => { const x = corpus.texts[t]; return `<li><i style="background:${x.colour}"></i><b>${x.name}</b> · ${esc(x.translation)} · <a href="${x.url}" target="_blank" rel="noopener">${esc(x.source)}</a> · ${x.licence} · ${x.verses.toLocaleString()} verses</li>`; }).join('');
@@ -368,7 +391,8 @@ async function boot() {
   const want = readHash(), wanted = want.v ? (refIndex.get(want.v) ?? -1) : -1;
   applyOrder(want.reading ? 0 : 1); order.target = order.value; // the page opens on the terrain; #reading opens on the bands
   syncOrderButtons();
-  if (wanted >= 0) { hold(wanted); const p = verses.positionOf(wanted, new THREE.Vector3()); controls.flyTo(p.x, p.z, EXTENT * 0.45); }
+  if (want.w) for (const ref of want.w.split('|')) { const i = refIndex.get(ref); if (i !== undefined) walk.push(i); }
+  if (wanted >= 0) { if (walk[walk.length - 1] !== wanted) walk.length = 0; hold(wanted); dive(wanted); }
   if (want.q) runSearch(want.q);
   let guided = false; try { guided = !!localStorage.getItem('cg-guided'); } catch {}
   if (!location.hash && !guided) { // the first visit opens with the guide, which any move of the hand dismisses
@@ -381,4 +405,4 @@ async function boot() {
   requestAnimationFrame(frame);
 }
 boot().catch((err) => { $('loading').textContent = 'The corpus failed to load. Refresh to try again.'; console.error(err); });
-window.__cg = { scene, camera, controls, terrain, verses, threads, order, setOrder, setKin, hold, letGo, showGuide, runSearch, clearSearch, get search() { return search; }, get kin() { return kin; }, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };
+window.__cg = { scene, camera, controls, terrain, verses, threads, order, setOrder, setKin, hold, letGo, step, climbOut, walk, showGuide, runSearch, clearSearch, get search() { return search; }, get kin() { return kin; }, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };

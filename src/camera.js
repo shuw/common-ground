@@ -56,6 +56,18 @@ export class GroundCamera {
   }
   goHome() { this.goalTarget.set(0, 0, 0); this.goalDistance = this.home.distance; }
   flyTo(x, z, distance) { this.goalTarget.set(x, 0, z); this.goalDistance = distance; this.clamp(); this.touched = true; }
+  /** Frame a few world points: the view that holds them all with some air around them. */
+  frame(points, pad = 1.3) {
+    let x0 = Infinity, x1 = -Infinity, z0 = Infinity, z1 = -Infinity;
+    for (const p of points) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); z0 = Math.min(z0, p.z); z1 = Math.max(z1, p.z); }
+    const wx = (x1 - x0) * pad + 0.8, wz = (z1 - z0) * pad + 0.8;
+    const vh = Math.tan(this.camera.fov / 2 * Math.PI / 180), hh = vh * this.camera.aspect;
+    this.goalTarget.set((x0 + x1) / 2, 0, (z0 + z1) / 2);
+    this.goalDistance = Math.max(this.minDistance, wx / (2 * hh), wz / (2 * vh * Math.sin(TILT)));
+    this.clamp(); this.touched = true;
+  }
+  view() { return { target: this.goalTarget.clone(), distance: this.goalDistance }; }
+  setView(v) { this.goalTarget.copy(v.target); this.goalDistance = v.distance; this.clamp(); }
 
   listen() {
     const c = this.canvas;

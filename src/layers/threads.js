@@ -40,9 +40,28 @@ export class ThreadsLayer {
     this.pulse = new THREE.Points(pg, this.pulseMaterial); this.pulse.frustumCulled = false; this.pulse.renderOrder = 5; this.group.add(this.pulse);
     this.a = new THREE.Vector3(); this.b = new THREE.Vector3(); this.c = new THREE.Color();
     this.buf = new Float32Array(MAX * SEG * 2 * 3); this.cbuf = new Float32Array(MAX * SEG * 2 * 3);
+    // the walk: a dim gold line through the verses stepped so far, drawn apart from the threads so it stays when they change
+    this.trailGeo = new LineSegmentsGeometry();
+    this.trailMaterial = new LineMaterial({ color: 0xd7b46a, linewidth: 1.2, transparent: true, opacity: 0.45, depthWrite: false, depthTest: false });
+    this.trail = new LineSegments2(this.trailGeo, this.trailMaterial); this.trail.frustumCulled = false; this.trail.visible = false; this.trail.renderOrder = 2;
+    this.trailBuf = new Float32Array(64 * SEG * 2 * 3);
   }
 
-  resize(w, h, pixelRatio) { for (const m of [this.core, this.halo]) m.resolution.set(w, h); this.markMaterial.uniforms.uPixelRatio.value = pixelRatio; this.pulseMaterial.uniforms.uPixelRatio.value = pixelRatio; }
+  /** Draw the walk through these verses, in order. */
+  setTrail(indices, positionOf) {
+    if (indices.length < 2) { this.trail.visible = false; return; }
+    let k = 0;
+    for (let n = 1; n < indices.length && k + SEG * 6 <= this.trailBuf.length; n++) {
+      positionOf(indices[n - 1], this.a); positionOf(indices[n], this.b);
+      const lift = 0.05 + this.a.distanceTo(this.b) * 0.1;
+      for (let s = 0; s < SEG; s++) for (const e of [s / SEG, (s + 1) / SEG]) {
+        this.trailBuf[k] = this.a.x + (this.b.x - this.a.x) * e; this.trailBuf[k + 1] = this.a.y + (this.b.y - this.a.y) * e + Math.sin(e * Math.PI) * lift; this.trailBuf[k + 2] = this.a.z + (this.b.z - this.a.z) * e; k += 3;
+      }
+    }
+    this.trailGeo.setPositions(this.trailBuf.subarray(0, k)); this.trail.visible = true;
+  }
+
+  resize(w, h, pixelRatio) { for (const m of [this.core, this.halo, this.trailMaterial]) m.resolution.set(w, h); this.markMaterial.uniforms.uPixelRatio.value = pixelRatio; this.pulseMaterial.uniforms.uPixelRatio.value = pixelRatio; }
 
   /** Draw arcs from verse i to each verse in kin (skipping -1), positions from positionOf, colours per kin;
    *  t is the seconds since the verse was picked: the arcs grow out of it, one a little after the other. */
