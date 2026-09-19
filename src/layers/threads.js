@@ -11,8 +11,8 @@ export class ThreadsLayer {
   constructor() {
     this.group = new THREE.Group(); this.group.visible = false;
     this.geo = new LineSegmentsGeometry();
-    this.core = new LineMaterial({ vertexColors: true, linewidth: 2.2, transparent: true, opacity: 0.95, depthWrite: false, depthTest: false });
-    this.halo = new LineMaterial({ vertexColors: true, linewidth: 7, transparent: true, opacity: 0.22, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
+    this.core = new LineMaterial({ vertexColors: true, linewidth: 1.3, transparent: true, opacity: 0.9, depthWrite: false, depthTest: false });
+    this.halo = new LineMaterial({ vertexColors: true, linewidth: 4, transparent: true, opacity: 0.14, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending });
     for (const m of [this.halo, this.core]) { const l = new LineSegments2(this.geo, m); l.frustumCulled = false; l.renderOrder = 3; this.group.add(l); }
     // the verse and its kin, lit
     const mg = new THREE.BufferGeometry();

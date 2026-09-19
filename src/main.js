@@ -43,7 +43,7 @@ document.addEventListener('keydown', (ev) => {
   if (ev.metaKey || ev.ctrlKey || ev.altKey || ev.target === qInput) return;
   if (ev.key === '?') showHelp(help.hidden);
   else if (ev.key === '/') { qInput.focus(); qInput.select(); ev.preventDefault(); }
-  else if (ev.key === 'Escape') { if (guideOn) showGuide(false); else if (!help.hidden) showHelp(false); else if (!about.hidden) showAbout(false); else if (query) clearSearch(); else if (pinned >= 0) unpin(); }
+  else if (ev.key === 'Escape') { if (guideOn) showGuide(false); else if (!help.hidden) showHelp(false); else if (!about.hidden) showAbout(false); else if (query) clearSearch(); else if (shown >= 0) letGo(); }
   const cx = canvas.clientWidth / 2, cy = canvas.clientHeight / 2, step = controls.goalDistance * 0.12;
   const pan = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[ev.key];
   if (pan) { controls.panBy(...pan); ev.preventDefault(); }
@@ -81,52 +81,45 @@ const card = $('card');
 const esc = (t) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 /** The nearest verse in each other text, in text order, or -1 for the verse's own text. */
 function kinOf(i) { return textIds.map((t, k) => (t === corpus.verses[i][0] ? -1 : kin.idx[i * 7 + k])); }
-function showVerse(i, isPinned) {
+function showVerse(i) {
   const [t, ref, text] = corpus.verses[i], info = corpus.texts[t];
   card.style.setProperty('--c', info.colour);
   card.querySelector('.who').textContent = `${info.name} · ${ref}`;
   card.querySelector('.verse').textContent = text;
-  card.querySelector('.tr').innerHTML = `${esc(info.translation)} · kinship ${(verses.kin[i] * 100).toFixed(0)}%` + (isPinned ? ` · <a href="${info.url}" target="_blank" rel="noopener">source ↗</a> · <button class="link" type="button" title="Copy a link to this verse">copy link</button>` : '');
-  const more = card.querySelector('.more');
-  if (isPinned) {
-    const prev = i > 0 && corpus.verses[i - 1][0] === t ? i - 1 : -1, next = i + 1 < corpus.verses.length && corpus.verses[i + 1][0] === t ? i + 1 : -1;
-    const around = `<div class="around">${prev >= 0 ? `<button data-verse="${prev}">‹ ${esc(corpus.verses[prev][1])}</button>` : '<span></span>'}${next >= 0 ? `<button data-verse="${next}">${esc(corpus.verses[next][1])} ›</button>` : ''}</div>`;
-    const list = kinOf(i).map((j, k) => j < 0 ? '' : `<li style="--c:${corpus.texts[textIds[k]].colour}"><button data-verse="${j}"><b>${esc(corpus.verses[j][1])}</b><span>${esc(corpus.verses[j][2])}</span></button></li>`).join('');
-    more.innerHTML = `${around}<div class="kinhead">nearest in each other text</div><ul class="kin">${list}</ul>`;
-  } else more.innerHTML = '';
-  card.hidden = !(help.hidden && about.hidden); card.classList.toggle('pinned', isPinned);
-  if (i !== shown) { shown = i; shownAt = performance.now() / 1000; card.classList.remove('enter'); void card.offsetWidth; card.classList.add('enter'); }
+  card.querySelector('.tr').innerHTML = `${esc(info.translation)} · kinship ${(verses.kin[i] * 100).toFixed(0)}% · <a href="${info.url}" target="_blank" rel="noopener">source ↗</a> · <button class="link" type="button" title="Copy a link to this verse">copy link</button>`;
+  const prev = i > 0 && corpus.verses[i - 1][0] === t ? i - 1 : -1, next = i + 1 < corpus.verses.length && corpus.verses[i + 1][0] === t ? i + 1 : -1;
+  const around = `<div class="around">${prev >= 0 ? `<button data-verse="${prev}">‹ ${esc(corpus.verses[prev][1])}</button>` : '<span></span>'}${next >= 0 ? `<button data-verse="${next}">${esc(corpus.verses[next][1])} ›</button>` : ''}</div>`;
+  const list = kinOf(i).map((j, k) => j < 0 ? '' : `<li style="--c:${corpus.texts[textIds[k]].colour}"><button data-verse="${j}"><b>${esc(corpus.verses[j][1])}</b><span>${esc(corpus.verses[j][2])}</span></button></li>`).join('');
+  card.querySelector('.more').innerHTML = `${around}<div class="kinhead">nearest in each other text</div><ul class="kin">${list}</ul>`;
+  card.hidden = !(help.hidden && about.hidden);
+  if (i !== shown) { shown = i; shownAt = performance.now() / 1000; card.classList.remove('enter'); void card.offsetWidth; card.classList.add('enter'); syncHash(); }
 }
 let shown = -1, shownAt = 0; // the verse the card and threads are about, and when it arrived
 let candidate = { i: -1, since: 0 }; // the verse under the pointer, waiting a moment to be sure
-function pin(i) { pinned = i; showVerse(i, true); syncHash(); }
+function hold(i) { held = true; showVerse(i); }
 card.addEventListener('click', async (e) => {
-  const b = e.target.closest('[data-verse]'); if (b) return pin(+b.dataset.verse);
+  const b = e.target.closest('[data-verse]'); if (b) return hold(+b.dataset.verse);
   const l = e.target.closest('.link');
   if (l) { try { await navigator.clipboard.writeText(location.href); l.textContent = 'copied'; } catch { l.textContent = location.href; } }
 });
-function unpin() { pinned = -1; shown = -1; card.hidden = true; threads.hide(); syncHash(); }
+function letGo() { held = false; shown = -1; card.hidden = true; threads.hide(); syncHash(); }
 
-// The URL hash carries the moment: #reading for the order, v=<reference> for a pinned verse.
+// The URL hash carries the moment: #reading for the order, v=<reference> for the verse in hand.
 function syncHash() {
   const parts = [];
   if (order.target === 0) parts.push('reading');
-  if (pinned >= 0) parts.push('v=' + encodeURIComponent(corpus.verses[pinned][1]));
+  if (shown >= 0) parts.push('v=' + encodeURIComponent(corpus.verses[shown][1]));
   if (query) parts.push('q=' + encodeURIComponent(query));
   const h = parts.length ? '#' + parts.join('&') : '';
   if (h !== location.hash) history.replaceState(null, '', location.pathname + location.search + h);
 }
 function readHash() { const p = new URLSearchParams(location.hash.slice(1)); return { reading: p.has('reading'), v: p.get('v'), q: p.get('q') }; }
-let hover = null, pinned = -1, down = null;
+let hover = null, held = false, overCard = false;
 canvas.addEventListener('pointermove', (e) => { hover = { x: e.clientX, y: e.clientY }; });
-canvas.addEventListener('pointerdown', (e) => { down = { x: e.clientX, y: e.clientY }; });
-canvas.addEventListener('pointerup', (e) => {
-  if (!down || controls.dragging || Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) { down = null; return; }
-  down = null;
-  const i = nearestVerse(e.clientX, e.clientY, 12);
-  if (i >= 0) pin(i); else unpin();
-});
-canvas.addEventListener('pointerleave', () => { hover = null; candidate = { i: -1, since: 0 }; if (pinned < 0) { card.hidden = true; shown = -1; threads.hide(); } });
+canvas.addEventListener('pointerleave', () => { hover = null; candidate = { i: -1, since: 0 }; });
+// the card stays while the pointer is on it, so its verses can be followed
+card.addEventListener('pointerenter', () => { overCard = true; });
+card.addEventListener('pointerleave', () => { overCard = false; candidate = { i: -1, since: performance.now() / 1000 }; });
 
 // Search: by words at once, by meaning once the model is here. Hits stay lit, everything else dims.
 const qInput = $('q'), results = $('results'), clearBtn = $('clear');
@@ -143,7 +136,7 @@ function renderResults(how, ids, extra = '') {
 }
 results.addEventListener('click', (e) => {
   const b = e.target.closest('[data-verse]'); if (!b) return;
-  const j = +b.dataset.verse; pin(j);
+  const j = +b.dataset.verse; hold(j);
   const p = verses.positionOf(j, _p); controls.flyTo(p.x, p.z, Math.min(controls.goalDistance, EXTENT * 0.5));
 });
 async function runSearch(q) {
@@ -323,8 +316,10 @@ function frame() {
     if (i !== candidate.i) candidate = { i, since: now };
   }
   // a verse is picked once the pointer has rested on it a moment, and let go the same way, so neighbours do not flicker
-  if (pinned < 0 && candidate.i !== shown && (candidate.i >= 0 || now - candidate.since > 0.12)) { // a verse shows at once; letting go waits a moment
-    if (candidate.i >= 0) showVerse(candidate.i, false); else { card.hidden = true; shown = -1; threads.hide(); }
+  // a verse shows once the pointer has rested on it a moment; letting go waits a little longer, and never while the card is under the pointer or a verse is held
+  if (candidate.i !== shown && !overCard) {
+    if (candidate.i >= 0 && now - candidate.since > 0.07) { held = false; showVerse(candidate.i); }
+    else if (candidate.i < 0 && !held && now - candidate.since > 0.15) letGo();
   }
   if (shown >= 0 && kin) threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt);
   else threads.hide();
@@ -365,7 +360,7 @@ async function boot() {
   for (const [ref, name] of marks) {
     const i = refIndex.get(ref); if (i === undefined) { console.warn('no such landmark', ref); continue; }
     const el = document.createElement('button'); el.className = 'landmark'; el.textContent = name; el.title = ref; el.style.color = corpus.texts[corpus.verses[i][0]].colour;
-    el.addEventListener('click', () => pin(i));
+    el.addEventListener('click', () => hold(i));
     $('labels').appendChild(el); landmarks.push({ el, i, w: name.length * 6.2 + 18 });
   }
   about.querySelector('.texts').innerHTML = textIds.map((t) => { const x = corpus.texts[t]; return `<li><i style="background:${x.colour}"></i><b>${x.name}</b> · ${esc(x.translation)} · <a href="${x.url}" target="_blank" rel="noopener">${esc(x.source)}</a> · ${x.licence} · ${x.verses.toLocaleString()} verses</li>`; }).join('');
@@ -373,7 +368,7 @@ async function boot() {
   const want = readHash(), wanted = want.v ? (refIndex.get(want.v) ?? -1) : -1;
   applyOrder(want.reading ? 0 : 1); order.target = order.value; // the page opens on the terrain; #reading opens on the bands
   syncOrderButtons();
-  if (wanted >= 0) { pinned = wanted; showVerse(wanted, true); const p = verses.positionOf(wanted, new THREE.Vector3()); controls.flyTo(p.x, p.z, EXTENT * 0.45); }
+  if (wanted >= 0) { hold(wanted); const p = verses.positionOf(wanted, new THREE.Vector3()); controls.flyTo(p.x, p.z, EXTENT * 0.45); }
   if (want.q) runSearch(want.q);
   let guided = false; try { guided = !!localStorage.getItem('cg-guided'); } catch {}
   if (!location.hash && !guided) { // the first visit opens with the guide, which any move of the hand dismisses
@@ -386,4 +381,4 @@ async function boot() {
   requestAnimationFrame(frame);
 }
 boot().catch((err) => { $('loading').textContent = 'The corpus failed to load. Refresh to try again.'; console.error(err); });
-window.__cg = { scene, camera, controls, terrain, verses, threads, order, setOrder, setKin, pin, unpin, showGuide, runSearch, clearSearch, get search() { return search; }, get kin() { return kin; }, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };
+window.__cg = { scene, camera, controls, terrain, verses, threads, order, setOrder, setKin, hold, letGo, showGuide, runSearch, clearSearch, get search() { return search; }, get kin() { return kin; }, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };

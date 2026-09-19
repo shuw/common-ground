@@ -32,7 +32,7 @@ The three dimensions are explained on the scene rather than in a paragraph: a ru
 
 ## Hover
 
-Every verse's place on screen is projected once per view (the cache is keyed on the camera matrix, the morph value and the canvas size), so a pointer move is a plain loop over 34,000 screen points rather than 34,000 projections. A verse shows the moment the pointer reaches it and is let go only after the pointer has been off every verse for a tenth of a second, so neighbouring points do not flicker. When one is picked the card slides in, a ring spreads from the point, the verse and its six kin light up as bright marks, and six fat glowing arcs grow out to them, each a little after the last, all inside a quarter of a second.
+Every verse's place on screen is projected once per view (the cache is keyed on the camera matrix, the morph value and the canvas size), so a pointer move is a plain loop over 34,000 screen points rather than 34,000 projections. A verse shows once the pointer has rested on it for 70 ms and is let go only after the pointer has been off every verse for 150 ms, so neighbouring points do not flicker; the card stays while the pointer is on it, so the kin it lists can be followed, and a verse reached that way is held until the pointer finds another. There is no click: the hash always names the verse in hand. When one is picked the card slides in, a ring spreads from the point, the verse and its six kin light up as bright marks, and six fine glowing arcs grow out to them, each a little after the last, all inside a quarter of a second.
 
 ## Permalinks
 
