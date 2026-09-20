@@ -127,4 +127,3 @@ kbd { font-family: var(--mono); font-size: 10px; line-height: 1; padding: 2px 5p
 #reading #stop { width: 22px; height: 22px; border-radius: 50%; border: 0; background: none; color: var(--dim); font-size: 16px; line-height: 1; cursor: pointer; padding: 0; visibility: hidden; }
 #reading.on #stop { visibility: visible; }
 #reading #stop:hover { color: var(--bone); }
-#reading:not(.on) #pos { opacity: 0.45; }

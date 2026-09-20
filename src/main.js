@@ -43,7 +43,7 @@ document.addEventListener('keydown', (ev) => {
   if (ev.metaKey || ev.ctrlKey || ev.altKey || ev.target === qInput) return;
   if (ev.key === '?') showHelp(help.hidden);
   else if (ev.key === '/') { qInput.focus(); qInput.select(); ev.preventDefault(); }
-  else if (ev.key === 'Escape') { if (guideOn) showGuide(false); else if (!help.hidden) showHelp(false); else if (!about.hidden) showAbout(false); else if (query) clearSearch(); else if (shown >= 0) letGo(); else if (reading.mode !== 'off') setReading('off'); }
+  else if (ev.key === 'Escape') { if (guideOn) showGuide(false); else if (!help.hidden) showHelp(false); else if (!about.hidden) showAbout(false); else if (query) clearSearch(); else if (shown >= 0) { dismissed = shown; letGo(); } else if (reading.mode === 'playing') setReading('paused'); }
   const cx = canvas.clientWidth / 2, cy = canvas.clientHeight / 2, step = controls.goalDistance * 0.12;
   const pan = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[ev.key];
   if (pan) { controls.panBy(...pan); ev.preventDefault(); }
@@ -101,6 +101,7 @@ function showVerse(i) {
 let shown = -1, shownAt = 0; // the verse the card and threads are about, and when it arrived
 let last = { i: -1, at: 0, left: 0 }; // the verse whose threads are still receding
 let candidate = { i: -1, since: 0 }; // the verse under the pointer, waiting a moment to be sure
+let dismissed = -1; // a verse let go with Escape stays down until the pointer finds another
 function hold(i) { held = true; showVerse(i); }
 card.addEventListener('click', async (e) => {
   const b = e.target.closest('[data-verse]'); if (b) return step(+b.dataset.verse);
@@ -272,21 +273,20 @@ function placeLandmarks(placed) {
 
 // The reading playhead: one position through every text at once. It plays by itself, a full reading in three
 // minutes, until paused; the line under it names the book each text is in.
-const reading = { pos: 0, mode: 'off', on: 0, seconds: 180 }; // off (all lit, twinkling), playing or paused; `on` eases between
+const reading = { pos: 0, mode: 'paused', on: 0, seconds: 180 }; // paused at the start, where everything is lit; `on` eases the window in
 const posInput = $('pos'), playBtn = $('play'), stopBtn = $('stop'), whereEl = $('reading').querySelector('.where');
 let whereKey = '';
 function applyReading() {
-  verses.setRead(reading.pos, reading.on);
-  $('reading').classList.toggle('on', reading.mode !== 'off');
+  verses.setRead(reading.pos, reading.on * Math.min(1, reading.pos / 0.03)); // at the very start every verse is lit
+  $('reading').classList.toggle('on', reading.pos > 0);
   if (document.activeElement !== posInput) posInput.value = Math.round(reading.pos * 1000);
-  if (reading.mode === 'off') { whereEl.innerHTML = ''; whereKey = ''; return; }
   const where = textIds.map((t) => { const x = corpus.texts[t], k = Math.min(x.verses - 1, Math.floor(reading.pos * x.verses)); let s = 0; for (const [name, n] of x.books) { if (k < s + n) return [t, name]; s += n; } return [t, '']; });
   const key = where.map((w) => w[1]).join('|');
   if (key !== whereKey) { whereKey = key; whereEl.innerHTML = where.map(([t, name]) => `<span style="color:${corpus.texts[t].colour}">${esc(name)}</span>`).join(''); }
 }
 function setReading(mode) { reading.mode = mode; playBtn.setAttribute('aria-pressed', mode === 'playing'); applyReading(); }
 playBtn.addEventListener('click', () => setReading(reading.mode === 'playing' ? 'paused' : 'playing'));
-stopBtn.addEventListener('click', () => setReading('off'));
+stopBtn.addEventListener('click', () => { reading.pos = 0; setReading('paused'); });
 posInput.addEventListener('input', () => { reading.pos = posInput.value / 1000; setReading('paused'); });
 document.addEventListener('keydown', (ev) => { if (!ev.metaKey && !ev.ctrlKey && !ev.altKey && ev.target !== qInput && (ev.key === ' ' || ev.key === 'p')) { setReading(reading.mode === 'playing' ? 'paused' : 'playing'); ev.preventDefault(); } });
 
@@ -345,7 +345,7 @@ function frame() {
     applyOrder(order.from + (order.target - order.from) * (e < 0.5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2));
   }
   if (corpus) {
-    const dt = Math.min(0.1, now - lastFrame), want = reading.mode !== 'off' && !query ? 1 : 0; // a search has its own light
+    const dt = Math.min(0.1, now - lastFrame), want = query ? 0 : 1; // a search has its own light
     if (reading.mode === 'playing') reading.pos = (reading.pos + dt / reading.seconds) % 1;
     if (Math.abs(reading.on - want) > 0.001) reading.on += (want - reading.on) * (1 - Math.exp(-dt * 3.5)); else reading.on = want;
     verses.setTime(now); applyReading();
@@ -359,9 +359,9 @@ function frame() {
     canvas.style.cursor = i >= 0 ? 'pointer' : '';
     if (i !== candidate.i) candidate = { i, since: now };
   }
-  // a verse is picked once the pointer has rested on it a moment, and let go the same way, so neighbours do not flicker
   // a verse shows once the pointer has rested on it a moment; letting go waits a little longer, and never while the card is under the pointer or a verse is held
-  if (candidate.i !== shown && !overCard) {
+  if (candidate.i !== dismissed) dismissed = -1;
+  if (candidate.i !== shown && !overCard && candidate.i !== dismissed) {
     if (candidate.i >= 0 && now - candidate.since > 0.04) { held = false; showVerse(candidate.i); }
     else if (candidate.i < 0 && !held && now - candidate.since > 0.12) letGo();
   }
