@@ -121,6 +121,7 @@ function letGo() { held = false; shown = -1; walk.length = 0; card.hidden = true
 function syncHash() {
   const parts = [];
   if (location.hash.includes('sway=')) parts.push('sway=' + SWAY);
+  if (location.hash.includes('twinkle=')) parts.push('twinkle=' + TWINKLE);
   if (reading.pos > 0.0005) parts.push('t=' + (reading.pos * 100).toFixed(1)); // where the reading stands, in percent; a link opens paused there
   if (order.target === 0) parts.push('reading');
   if (shown >= 0) parts.push('v=' + encodeURIComponent(corpus.verses[shown][1]));
@@ -129,7 +130,8 @@ function syncHash() {
   const h = parts.length ? '#' + parts.join('&') : '';
   if (h !== location.hash) history.replaceState(null, '', location.pathname + location.search + h);
 }
-const SWAY = Math.max(0, parseFloat(new URLSearchParams(location.hash.slice(1)).get('sway') ?? '1')) || 0; // how far the verses drift at rest; 0 is still, 1 the default
+const tune = (k, d) => Math.max(0, parseFloat(new URLSearchParams(location.hash.slice(1)).get(k) ?? d)) || 0; // a number in the hash while the right level is found
+const SWAY = tune('sway', '1'), TWINKLE = tune('twinkle', '1'); // how far the verses drift, and how much they breathe, at rest; 0 is still
 function readHash() { const p = new URLSearchParams(location.hash.slice(1)); return { reading: p.has('reading'), v: p.get('v'), q: p.get('q'), w: p.get('w'), t: p.get('t') }; }
 let hover = null, held = false, overCard = false, down = null;
 canvas.addEventListener('pointermove', (e) => { hover = { x: e.clientX, y: e.clientY }; });
@@ -405,7 +407,7 @@ function frame() {
     if (reading.mode === 'playing') { reading.pos = (reading.pos + dt / reading.seconds) % 1; if (Math.floor(now) !== Math.floor(now - dt)) syncHash(); }
     if (Math.abs(reading.on - want) > 0.001) reading.on += (want - reading.on) * (1 - Math.exp(-dt * 3.5)); else reading.on = want;
     verses.setTime(now); applyReading();
-    verses.setSway(SWAY * (1 - reading.on * Math.min(1, reading.pos / 0.03))); // afloat at rest; still once the reading is under way
+    verses.setSway(SWAY * (1 - reading.on * Math.min(1, reading.pos / 0.03))); verses.setTwinkle(TWINKLE); // afloat at rest; still once the reading is under way
   }
   lastFrame = now;
   placeBandLabels(); { const placed = placeRegionLabels(); placeLandmarks(placed); placeFineLabels(placed); placeRefLabels(placed); } placeGuide();

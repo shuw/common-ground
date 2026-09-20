@@ -52,7 +52,7 @@ The URL hash carries the moment and nothing else: `reading` for the order, `v=<r
 
 ## Afloat
 
-At the start of the reading, where every verse is lit, the verses drift on the terrain as if afloat: two slow waves crossing, each verse on its own phase, up to about two hundredths of the ground's width. The drift is computed the same way on the CPU so threads and the hit test stay attached, and the screen cache refreshes every hundredth of a second while it runs. It fades out over the first few percent of the reading, since a rolling window over drifting points would blur. `sway=<n>` in the hash sets the strength (0 still, 1 the default) while the right level is found.
+At the start of the reading, where every verse is lit, the verses drift on the terrain as if afloat: two slow waves crossing, each verse on its own phase, up to about two hundredths of the ground's width. The drift is computed the same way on the CPU so threads and the hit test stay attached, and the screen cache refreshes every hundredth of a second while it runs. It fades out over the first few percent of the reading, since a rolling window over drifting points would blur. Every verse also breathes a little in brightness and size, two rates mixed so it never reads as a beat. `sway=<n>` and `twinkle=<n>` in the hash set the two strengths (0 still, 1 the default) while the right levels are found.
 
 ## The reading playhead
 

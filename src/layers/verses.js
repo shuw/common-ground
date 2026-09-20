@@ -8,7 +8,7 @@ import { place } from '../space.js';
 
 const VERT = /* glsl */`
   attribute vec3 aMeaning; attribute vec3 aColor; attribute float aDelay; attribute float aKin; attribute float aHit;
-  uniform float uPixelRatio, uScale, uMorph, uKin, uSearch, uRead, uReadOn, uTime, uSway;
+  uniform float uPixelRatio, uScale, uMorph, uKin, uSearch, uRead, uReadOn, uTime, uSway, uTwinkle;
   varying vec3 vColor; varying float vAlpha;
   float swell(float t) { return 1.0 + 0.6 * sin(t * 3.14159); } // a little bigger mid-flight
   void main() {
@@ -31,12 +31,14 @@ const VERT = /* glsl */`
     float hit = mix(1.0, mix(0.06, 1.0, aHit), uSearch);
     // at rest every verse twinkles a little on its own phase; the reading playhead, when it is on, takes over:
     // verses just behind it glow, verses read stay lit, verses ahead sit dimmer. uReadOn eases between the two.
-    float ph = aDelay * 61.0 + aKin * 17.0, twinkle = 1.0 + 0.2 * sin(uTime * 1.3 + ph) * (1.0 - uReadOn);
+    // twinkle: each verse breathes in brightness and size on its own phase, two rates mixed so it never reads as a beat
+    float ph = aDelay * 61.0 + aKin * 17.0, tw = (sin(uTime * 1.3 + ph) * 0.6 + sin(uTime * 2.9 + ph * 2.3) * 0.4) * uTwinkle * (1.0 - uReadOn);
+    float twinkle = clamp(1.0 + 0.2 * tw, 0.0, 2.0);
     float rel = aDelay - uRead, ahead = step(0.0, rel), front = smoothstep(-0.045, 0.0, rel) * (1.0 - ahead);
     float read = mix(1.0, mix(0.6 + 0.4 * front, 0.35, ahead), uReadOn);
     vColor = mix(vColor, vec3(1.0), 0.6 * front * uReadOn);
     vAlpha = mix(mix(0.3, 1.0, aKin), 1.0, t) * mix(0.05, 1.0, lit) * hit * read * twinkle;
-    gl_PointSize = swell(t) * (0.8 + 0.2 * lit) * (1.0 + 0.6 * aHit * uSearch) * (1.0 + 1.3 * front * uReadOn) * uScale * uPixelRatio / -mv.z;
+    gl_PointSize = swell(t) * (0.8 + 0.2 * lit) * (1.0 + 0.6 * aHit * uSearch) * (1.0 + 1.3 * front * uReadOn) * (1.0 + 0.12 * tw) * uScale * uPixelRatio / -mv.z;
   }`;
 const FRAG = /* glsl */`
   varying vec3 vColor; varying float vAlpha;
@@ -105,7 +107,7 @@ export class VersesLayer {
     geo.setAttribute('aKin', new THREE.BufferAttribute(kin, 1));
     this.hit = new Float32Array(n); geo.setAttribute('aHit', new THREE.BufferAttribute(this.hit, 1));
     geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
-    this.material = new THREE.ShaderMaterial({ uniforms: { uPixelRatio: { value: pixelRatio }, uScale: { value: 22 }, uMorph: { value: 1 }, uKin: { value: 0 }, uSearch: { value: 0 }, uRead: { value: 0 }, uReadOn: { value: 0 }, uTime: { value: 0 }, uSway: { value: 0 } }, vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false });
+    this.material = new THREE.ShaderMaterial({ uniforms: { uPixelRatio: { value: pixelRatio }, uScale: { value: 22 }, uMorph: { value: 1 }, uKin: { value: 0 }, uSearch: { value: 0 }, uRead: { value: 0 }, uReadOn: { value: 0 }, uTime: { value: 0 }, uSway: { value: 0 }, uTwinkle: { value: 1 } }, vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false });
     this.points = new THREE.Points(geo, this.material);
     this.points.frustumCulled = false;
     return this.points;
@@ -126,6 +128,7 @@ export class VersesLayer {
     return out;
   }
   setSway(v) { this.sway = v; if (this.material) this.material.uniforms.uSway.value = v; }
+  setTwinkle(v) { if (this.material) this.material.uniforms.uTwinkle.value = v; }
   /** Whether verse i is lit under the current threshold (a dimmed verse should not catch the pointer). */
   isLit(i) { return this.kin[i] >= this.threshold - 0.04 && (!this.searching || this.hit[i] > 0); }
   /** Light only these verses (null to light everything again). */
