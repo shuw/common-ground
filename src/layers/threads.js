@@ -76,10 +76,13 @@ export class ThreadsLayer {
       positionOf(kin[j], this.b); this.c.set(colours[j]);
       if (reach >= 0.999) { mp.setXYZ(m, this.b.x, this.b.y + 0.01, this.b.z); mc.setXYZ(m, this.c.r, this.c.g, this.c.b); mb.setX(m, 0); m++; }
       if (reach <= 0) continue;
-      const lift = Math.min(0.3, 0.04 + this.a.distanceTo(this.b) * 0.05); // low arcs, so six threads fan out instead of rising as one
+      const dist = this.a.distanceTo(this.b), lift = Math.min(0.3, 0.04 + dist * 0.05); // low arcs, so six threads fan out instead of rising as one
+      // kin that lie the same way would run as one thread: each bows a little to its own side
+      const dx = this.b.x - this.a.x, dz = this.b.z - this.a.z, len = Math.hypot(dx, dz) || 1, side = (n - 3.5) * Math.min(dist, 3) * 0.05, px = -dz / len * side, pz = dx / len * side;
       for (let s = 0; s < SEG; s++) {
         for (const e of [s / SEG * reach, (s + 1) / SEG * reach]) {
-          this.buf[k] = this.a.x + (this.b.x - this.a.x) * e; this.buf[k + 1] = this.a.y + (this.b.y - this.a.y) * e + Math.sin(e * Math.PI) * lift; this.buf[k + 2] = this.a.z + (this.b.z - this.a.z) * e;
+          const bow = Math.sin(e * Math.PI);
+          this.buf[k] = this.a.x + dx * e + px * bow; this.buf[k + 1] = this.a.y + (this.b.y - this.a.y) * e + bow * lift; this.buf[k + 2] = this.a.z + dz * e + pz * bow;
           this.cbuf[k] = this.c.r; this.cbuf[k + 1] = this.c.g; this.cbuf[k + 2] = this.c.b; k += 3;
         }
       }
