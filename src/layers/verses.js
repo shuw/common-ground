@@ -8,7 +8,7 @@ import { place } from '../space.js';
 
 const VERT = /* glsl */`
   attribute vec3 aMeaning; attribute vec3 aColor; attribute float aDelay; attribute float aKin; attribute float aHit;
-  uniform float uPixelRatio, uScale, uMorph, uKin, uSearch, uRead, uReadOn, uTime;
+  uniform float uPixelRatio, uScale, uMorph, uKin, uSearch, uRead, uReadOn, uTime, uSway;
   varying vec3 vColor; varying float vAlpha;
   float swell(float t) { return 1.0 + 0.6 * sin(t * 3.14159); } // a little bigger mid-flight
   void main() {
@@ -18,6 +18,11 @@ const VERT = /* glsl */`
     t = t * t * (3.0 - 2.0 * t);
     vec3 p = mix(position, aMeaning, t);
     p.y += sin(t * 3.14159) * 0.6; // an arc on the way, so the flight reads as flight
+    // at rest on the terrain the verses drift as if afloat: two slow waves crossing, each verse on its own phase
+    float sp = aDelay * 61.0 + aKin * 17.0, sw = uSway * t;
+    p.x += (sin(uTime * 0.45 + sp) * 0.7 + sin(uTime * 0.23 + p.z * 0.9 + sp * 0.3) * 0.5) * 0.02 * sw;
+    p.z += (cos(uTime * 0.38 + sp * 1.3) * 0.7 + sin(uTime * 0.19 + p.x * 0.8 + sp * 0.2) * 0.5) * 0.02 * sw;
+    p.y += sin(uTime * 0.6 + sp + p.x * 0.7) * 0.012 * sw;
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
     gl_Position = projectionMatrix * mv;
     // in reading order a verse shines by its kinship; below the threshold it all but goes out
@@ -74,7 +79,7 @@ export function readingLayout(corpus) {
 function indexBooks(books) { for (const list of Object.values(books)) { let s = 0; for (const b of list) { b.start = s; b.end = s + b.n; s = b.end; } } }
 
 export class VersesLayer {
-  constructor() { this.points = null; this.meaning = null; this.morph = 1; this.threshold = 0; }
+  constructor() { this.points = null; this.meaning = null; this.morph = 1; this.threshold = 0; this.time = 0; this.sway = 0; }
 
   build(corpus, layout, heightAt, pixelRatio) {
     const n = layout.uv.length, N = corpus.verses.length;
@@ -100,7 +105,7 @@ export class VersesLayer {
     geo.setAttribute('aKin', new THREE.BufferAttribute(kin, 1));
     this.hit = new Float32Array(n); geo.setAttribute('aHit', new THREE.BufferAttribute(this.hit, 1));
     geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
-    this.material = new THREE.ShaderMaterial({ uniforms: { uPixelRatio: { value: pixelRatio }, uScale: { value: 22 }, uMorph: { value: 1 }, uKin: { value: 0 }, uSearch: { value: 0 }, uRead: { value: 0 }, uReadOn: { value: 0 }, uTime: { value: 0 } }, vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false });
+    this.material = new THREE.ShaderMaterial({ uniforms: { uPixelRatio: { value: pixelRatio }, uScale: { value: 22 }, uMorph: { value: 1 }, uKin: { value: 0 }, uSearch: { value: 0 }, uRead: { value: 0 }, uReadOn: { value: 0 }, uTime: { value: 0 }, uSway: { value: 0 } }, vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false });
     this.points = new THREE.Points(geo, this.material);
     this.points.frustumCulled = false;
     return this.points;
@@ -110,8 +115,17 @@ export class VersesLayer {
   positionOf(i, out) {
     const t0 = Math.min(1, Math.max(0, this.morph * 1.35 - this.delays[i] * 0.35)), t = t0 * t0 * (3 - 2 * t0);
     const a = this.readingPositions, b = this.meaning;
-    return out.set(a[i * 3] + (b[i * 3] - a[i * 3]) * t, a[i * 3 + 1] + (b[i * 3 + 1] - a[i * 3 + 1]) * t + Math.sin(t * Math.PI) * 0.6, a[i * 3 + 2] + (b[i * 3 + 2] - a[i * 3 + 2]) * t);
+    out.set(a[i * 3] + (b[i * 3] - a[i * 3]) * t, a[i * 3 + 1] + (b[i * 3 + 1] - a[i * 3 + 1]) * t + Math.sin(t * Math.PI) * 0.6, a[i * 3 + 2] + (b[i * 3 + 2] - a[i * 3 + 2]) * t);
+    const sw = this.sway * t; // the same drift as the shader, so threads and the hit test stay attached
+    if (sw > 0) {
+      const sp = this.delays[i] * 61 + this.kin[i] * 17, T = this.time, px = out.x, pz = out.z;
+      out.x += (Math.sin(T * 0.45 + sp) * 0.7 + Math.sin(T * 0.23 + pz * 0.9 + sp * 0.3) * 0.5) * 0.02 * sw;
+      out.z += (Math.cos(T * 0.38 + sp * 1.3) * 0.7 + Math.sin(T * 0.19 + px * 0.8 + sp * 0.2) * 0.5) * 0.02 * sw;
+      out.y += Math.sin(T * 0.6 + sp + px * 0.7) * 0.012 * sw;
+    }
+    return out;
   }
+  setSway(v) { this.sway = v; if (this.material) this.material.uniforms.uSway.value = v; }
   /** Whether verse i is lit under the current threshold (a dimmed verse should not catch the pointer). */
   isLit(i) { return this.kin[i] >= this.threshold - 0.04 && (!this.searching || this.hit[i] > 0); }
   /** Light only these verses (null to light everything again). */
@@ -124,7 +138,7 @@ export class VersesLayer {
 
   /** The reading playhead: a position 0..1 through every text, and how far on it is (0 off, 1 fully on). */
   setRead(pos, on) { if (this.material) { this.material.uniforms.uRead.value = pos; this.material.uniforms.uReadOn.value = on; } }
-  setTime(t) { if (this.material) this.material.uniforms.uTime.value = t; }
+  setTime(t) { this.time = t; if (this.material) this.material.uniforms.uTime.value = t; }
   setMorph(m) { this.morph = m; if (this.material) this.material.uniforms.uMorph.value = m; }
   setKin(k) { this.threshold = k; if (this.material) this.material.uniforms.uKin.value = k; }
 }

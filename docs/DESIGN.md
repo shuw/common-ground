@@ -50,6 +50,10 @@ A click on a verse holds it: the card stays while the pointer wanders, until the
 
 The URL hash carries the moment and nothing else: `reading` for the order, `v=<reference>` for the verse in hand (the page opens with it held and its threads drawn, the view left alone, so a refresh changes nothing), `q=<query>` for a search, `t=<percent>` for where the reading stands (a link opens paused there; while playing the hash follows once a second).
 
+## Afloat
+
+At the start of the reading, where every verse is lit, the verses drift on the terrain as if afloat: two slow waves crossing, each verse on its own phase, up to about two hundredths of the ground's width. The drift is computed the same way on the CPU so threads and the hit test stay attached, and the screen cache refreshes every hundredth of a second while it runs. It fades out over the first few percent of the reading, since a rolling window over drifting points would blur. `sway=<n>` in the hash sets the strength (0 still, 1 the default) while the right level is found.
+
 ## The reading playhead
 
 One position runs through every text at once, by fraction, a full reading in three minutes, paused at the start until the play button, space, or a drag on the scrubber moves it. At the start every verse is lit and twinkles a little on its own phase; the rolling window fades in over the first few percent of the reading, so dragging the scrubber back to the left lights everything again, and the × beside the scrubber returns there. Escape pauses a playing reading. It sits at the bottom centre. Verses just behind the playhead, the last 4.5% of each text, glow larger and whiter; verses already read stay at 60%; verses ahead sit at 35%. In the meaning view the seven fronts wander the terrain together, each book tracing its own path; in reading order it is a wavefront sweeping left to right. The line under the scrubber names the book each text is in at that moment, in its colour. Darkening the unread verses further was tried and made the map look dead; the levels are set so the map still reads as a whole. A search takes the playhead's light off so the hits are clear.

@@ -61,7 +61,7 @@ const _p = new THREE.Vector3();
 let screen = null, screenKey = ''; // every verse's place on screen, refreshed only when the view or the flight moves
 function projectAll() {
   const w = canvas.clientWidth, h = canvas.clientHeight, n = verses.meaning.length / 3;
-  const key = `${camera.matrixWorldInverse.elements.join(',')}|${order.value}|${w}x${h}`;
+  const key = `${camera.matrixWorldInverse.elements.join(',')}|${order.value}|${w}x${h}|${verses.sway > 0 ? verses.time.toFixed(2) : ''}`;
   if (key === screenKey) return; screenKey = key;
   if (!screen || screen.length !== n * 3) screen = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
@@ -120,6 +120,7 @@ function letGo() { held = false; shown = -1; walk.length = 0; card.hidden = true
 // The URL hash carries the moment: #reading for the order, v=<reference> for the verse in hand.
 function syncHash() {
   const parts = [];
+  if (location.hash.includes('sway=')) parts.push('sway=' + SWAY);
   if (reading.pos > 0.0005) parts.push('t=' + (reading.pos * 100).toFixed(1)); // where the reading stands, in percent; a link opens paused there
   if (order.target === 0) parts.push('reading');
   if (shown >= 0) parts.push('v=' + encodeURIComponent(corpus.verses[shown][1]));
@@ -128,6 +129,7 @@ function syncHash() {
   const h = parts.length ? '#' + parts.join('&') : '';
   if (h !== location.hash) history.replaceState(null, '', location.pathname + location.search + h);
 }
+const SWAY = Math.max(0, parseFloat(new URLSearchParams(location.hash.slice(1)).get('sway') ?? '1')) || 0; // how far the verses drift at rest; 0 is still, 1 the default
 function readHash() { const p = new URLSearchParams(location.hash.slice(1)); return { reading: p.has('reading'), v: p.get('v'), q: p.get('q'), w: p.get('w'), t: p.get('t') }; }
 let hover = null, held = false, overCard = false, down = null;
 canvas.addEventListener('pointermove', (e) => { hover = { x: e.clientX, y: e.clientY }; });
@@ -403,6 +405,7 @@ function frame() {
     if (reading.mode === 'playing') { reading.pos = (reading.pos + dt / reading.seconds) % 1; if (Math.floor(now) !== Math.floor(now - dt)) syncHash(); }
     if (Math.abs(reading.on - want) > 0.001) reading.on += (want - reading.on) * (1 - Math.exp(-dt * 3.5)); else reading.on = want;
     verses.setTime(now); applyReading();
+    verses.setSway(SWAY * (1 - reading.on * Math.min(1, reading.pos / 0.03))); // afloat at rest; still once the reading is under way
   }
   lastFrame = now;
   placeBandLabels(); { const placed = placeRegionLabels(); placeLandmarks(placed); placeFineLabels(placed); placeRefLabels(placed); } placeGuide();
