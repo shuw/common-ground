@@ -82,6 +82,7 @@ const esc = (t) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>'
 /** The nearest verse in each other text, in text order, or -1 for the verse's own text. */
 function kinOf(i) { return textIds.map((t, k) => (t === corpus.verses[i][0] ? -1 : kin.idx[i * 7 + k])); }
 function showVerse(i) {
+  if (i === shown && !card.hidden) return; // already up: nothing to redraw, nothing to replay
   const [t, ref, text] = corpus.verses[i], info = corpus.texts[t];
   card.style.setProperty('--c', info.colour);
   card.querySelector('.who').textContent = `${info.name} · ${ref}`;
