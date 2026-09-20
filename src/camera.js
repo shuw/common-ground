@@ -51,8 +51,9 @@ export class GroundCamera {
 
   /** The starting view: centred, at a distance where the whole ground fits the width of the screen. */
   setHome(distance, snap) {
+    const atHome = this.goalTarget.lengthSq() < 1e-4 && Math.abs(this.goalDistance - this.home.distance) < 1e-3; // a view left at home follows home as the window changes
     this.home.distance = distance; this.maxDistance = Math.max(this.maxDistance, distance * 1.3);
-    if (snap || !this.touched) { this.goalTarget.set(0, 0, 0); this.goalDistance = distance; if (snap) { this.target.set(0, 0, 0); this.distance = distance; } }
+    if (snap || !this.touched || atHome) { this.goalTarget.set(0, 0, 0); this.goalDistance = distance; if (snap) { this.target.set(0, 0, 0); this.distance = distance; } }
   }
   goHome() { this.goalTarget.set(0, 0, 0); this.goalDistance = this.home.distance; }
   flyTo(x, z, distance) { this.goalTarget.set(x, 0, z); this.goalDistance = distance; this.clamp(); this.touched = true; }

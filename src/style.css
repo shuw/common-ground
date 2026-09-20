@@ -12,7 +12,7 @@ body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(-
 #legend { position: fixed; left: 20px; bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; flex-wrap: wrap; gap: 4px 14px; max-width: min(560px, calc(100% - 40px)); font-family: var(--mono); font-size: 11px; color: var(--dim); pointer-events: none; }
 #legend i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
 #legend b { font-weight: 400; color: var(--faint); }
-#card { position: fixed; right: 16px; top: calc(58px + env(safe-area-inset-top, 0px)); width: min(380px, calc(100% - 32px)); display: grid; gap: 6px; user-select: text; -webkit-user-select: text; max-height: calc(100vh - 120px); overflow-y: auto; scrollbar-width: none; }
+#card { position: fixed; right: 16px; top: calc(58px + env(safe-area-inset-top, 0px)); width: min(380px, calc(100% - 32px)); display: grid; gap: 6px; user-select: text; -webkit-user-select: text; max-height: calc(100vh - 175px - env(safe-area-inset-top, 0px)); overflow-y: auto; scrollbar-width: none; }
 #card[hidden] { display: none; }
 #card .main { padding: 14px 18px; background: var(--panel); border: 1px solid var(--line); border-left: 3px solid var(--c, var(--accent)); border-radius: 10px; }
 #card .kins { display: grid; gap: 5px; padding-left: 16px; position: relative; }
@@ -135,3 +135,10 @@ body.guiding #labels { opacity: 0.12; }
 #reading #stop { width: 22px; height: 22px; border-radius: 50%; border: 0; background: none; color: var(--dim); font-size: 16px; line-height: 1; cursor: pointer; padding: 0; visibility: hidden; }
 #reading.on #stop { visibility: visible; }
 #reading #stop:hover { color: var(--bone); }
+#labels .fine { position: absolute; left: 0; top: 0; font-family: var(--serif); font-style: italic; font-size: 12.5px; white-space: nowrap; opacity: 0; text-shadow: 0 1px 5px #000, 0 0 10px #000; transition: opacity 0.2s; letter-spacing: 0.01em; }
+#labels .ref { position: absolute; left: 0; top: 0; font-family: var(--mono); font-size: 10px; letter-spacing: 0.03em; white-space: nowrap; opacity: 0; text-shadow: 0 1px 4px #000, 0 0 8px #000; transition: opacity 0.15s; }
+#card .expand { display: block; width: 100%; margin-top: 10px; padding: 7px 0 0; border: 0; border-top: 1px solid var(--line); background: none; color: var(--dim); font: inherit; font-family: var(--serif); font-size: 14px; text-align: left; cursor: pointer; }
+#card .expand span { float: right; transition: transform 0.2s; }
+#card:not(.folded) .expand span { transform: rotate(180deg); }
+#card.folded .kins { display: none; }
+@media (max-width: 1000px) and (min-width: 641px) { #search { left: 20px; right: auto; width: min(460px, 60%); transform: none; top: calc(66px + env(safe-area-inset-top, 0px)); } #results { left: 20px; transform: none; top: calc(108px + env(safe-area-inset-top, 0px)); } #title p { display: none; } #card, #help, #about { top: calc(112px + env(safe-area-inset-top, 0px)); } #card { max-height: calc(100vh - 230px - env(safe-area-inset-top, 0px)); } #guide-labels .intro { top: calc(120px + env(safe-area-inset-top, 0px)); } }

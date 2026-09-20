@@ -82,5 +82,28 @@ for r in range(R):
         for i in m: b = verses[i][1].rsplit(' ', 1)[0] if verses[i][0] in ('torah', 'gospels') else corpus['texts'][verses[i][0]]['name']; books[b] = books.get(b, 0) + 1
         print(f"\n[{r}] n={len(m)} {' · '.join(top)}  share={ {k: v for k, v in share.items() if v} }  books={dict(sorted(books.items(), key=lambda kv: -kv[1])[:5])}")
         for i in rng.choice(m, min(4, len(m)), replace=False): print(f'   {verses[i][1]}: {verses[i][2][:110]}')
-json.dump({'k': R, 'regions': regions, 'label': [int(x) for x in lab]}, open('public/data/regions.json', 'w'), separators=(',', ':'))
+# finer clusters, each named by the book that dominates it, for labels that appear as the camera comes closer
+F = int(os.environ.get('FINE', 140))
+fk = KMeans(n_clusters=F, n_init=2, random_state=11).fit(UV)
+sura_names = [name for name, _ in corpus['texts']['quran']['books']]
+book_of_verse = []
+for v in verses:
+    t, ref = v[0], v[1]
+    if t in ('torah', 'gospels'): book_of_verse.append(ref.rsplit(' ', 1)[0])
+    elif t == 'quran': book_of_verse.append(sura_names[int(ref.split()[1].split(':')[0]) - 1])
+    else: book_of_verse.append(corpus['texts'][t]['name'])
+# each fine cluster is named by its three most telling words (a book name when one book fills most of it)
+ftf = TfidfVectorizer(stop_words='english', min_df=3, max_df=0.4, sublinear_tf=True)
+fdocs = [' '.join(verses[i][2] for i in np.where(fk.labels_ == r)[0]) for r in range(F)]
+FX = ftf.fit_transform(fdocs); fvocab = np.array(ftf.get_feature_names_out())
+fine = []
+for r in range(F):
+    m = np.where(fk.labels_ == r)[0]
+    books = {}
+    for i in m: books[(verses[i][0], book_of_verse[i])] = books.get((verses[i][0], book_of_verse[i]), 0) + 1
+    (t, b), n = max(books.items(), key=lambda kv: kv[1])
+    words = [w for w in fvocab[np.argsort(-FX[r].toarray()[0])[:6]] if not w.isdigit() and "'" not in w][:3]
+    c = UV[m].mean(axis=0); radius = float(np.sqrt(((UV[m] - c) ** 2).sum(axis=1).mean()))
+    fine.append({'u': round(float(c[0]), 4), 'v': round(float(c[1]), 4), 'r': round(radius, 4), 'n': int(len(m)), 'text': t, 'name': b if n / len(m) >= 0.6 else ' · '.join(words)})
+json.dump({'k': R, 'regions': regions, 'label': [int(x) for x in lab], 'fine': fine}, open('public/data/regions.json', 'w'), separators=(',', ':'))
 print('public/data/regions.json', os.path.getsize('public/data/regions.json') // 1024, 'KB', 'named', sum(1 for r in regions if r['name']))

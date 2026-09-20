@@ -20,7 +20,9 @@ const controls = new GroundCamera(camera, canvas, { extent: EXTENT, minDistance:
 const terrain = new TerrainLayer(), verses = new VersesLayer(), threads = new ThreadsLayer();
 let corpus = null, layout = null, kin = null, textIds = [], textColours = [], regions = null, search = null, refIndex = new Map();
 
-let sized = false;
+const NARROW = 640; // one breakpoint for the page: below it the layout is a phone's
+const isNarrow = () => canvas.clientWidth < NARROW;
+let sized = false, wasNarrow = null;
 function resize() {
   const w = canvas.clientWidth, h = canvas.clientHeight;
   renderer.setSize(w, h, false);
@@ -29,6 +31,8 @@ function resize() {
   // home is the distance at which the whole ground fits the width of the screen; a tall screen sits further back
   const fit = Math.max(EXTENT * 1.275, (EXTENT * 0.55) / (Math.tan(camera.fov / 2 * Math.PI / 180) * camera.aspect));
   controls.setHome(fit, !sized); sized = true;
+  if (wasNarrow !== null && wasNarrow !== isNarrow() && shown >= 0) { const i = shown; shown = -1; showVerse(i); } // the card's shape depends on the width
+  wasNarrow = isNarrow();
 }
 window.addEventListener('resize', resize);
 resize();
@@ -92,8 +96,10 @@ function showVerse(i) {
   const around = `<div class="around">${prev >= 0 ? `<button data-verse="${prev}">‹ ${esc(corpus.verses[prev][1])}</button>` : '<span></span>'}${next >= 0 ? `<button data-verse="${next}">${esc(corpus.verses[next][1])} ›</button>` : ''}</div>`;
   let n = 0; // each kin card arrives as its thread lands: the n-th thread reaches at 200 ms + 10 ms per step
   const kins = kinOf(i).map((j, k) => j < 0 ? '' : `<div class="k" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}</b><span>${esc(corpus.verses[j][2])}</span></button></div>`).join('');
-  card.querySelector('.more').innerHTML = around;
+  const narrow = isNarrow(); // on a phone the kin wait behind a tap
+  card.querySelector('.more').innerHTML = around + (narrow && n ? `<button class="expand" type="button">${n} nearest in other texts <span>▾</span></button>` : '');
   card.querySelector('.kins').innerHTML = kins;
+  card.classList.toggle('folded', narrow && n > 0);
   const wasHidden = card.hidden;
   card.hidden = !(help.hidden && about.hidden);
   if (i !== shown) { const fresh = wasHidden || shown < 0; shown = i; shownAt = performance.now() / 1000; card.classList.remove('enter', 'fresh'); void card.offsetWidth; card.classList.add('enter'); if (fresh) card.classList.add('fresh'); syncHash(); }
@@ -105,6 +111,7 @@ let dismissed = -1; // a verse let go with Escape stays down until the pointer f
 function hold(i) { held = true; showVerse(i); }
 card.addEventListener('click', async (e) => {
   const b = e.target.closest('[data-verse]'); if (b) return step(+b.dataset.verse);
+  if (e.target.closest('.expand')) { card.classList.toggle('folded'); return; }
   const l = e.target.closest('.link');
   if (l) { try { await navigator.clipboard.writeText(location.href); l.textContent = 'copied'; } catch { l.textContent = location.href; } }
 });
@@ -257,7 +264,7 @@ function placeGuide() {
     const a = toScreen(place(far[0][0], far[0][1], terrain.heightAt(far[0][0], far[0][1]) + 0.04, _q).project(camera)), b = toScreen(place(far[1][0], far[1][1], terrain.heightAt(far[1][0], far[1][1]) + 0.04, _q).project(camera));
     setLine(gl.span, a, b); setDot(gl.da, a); setDot(gl.db, b);
     const sm = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, a[2] && b[2]];
-    const dl = putLabel(gt.span, sm[0] - 125, sm[1] + (canvas.clientWidth < 640 ? 120 : 36), 'left'); // lower on a phone, clear of the height label setLine(gl.ld, sm, [dl[0] + dl[2] / 2, dl[1], sm[2]]);
+    const dl = putLabel(gt.span, sm[0] - 125, sm[1] + (isNarrow() ? 120 : 36), 'left'); // lower on a phone, clear of the height label setLine(gl.ld, sm, [dl[0] + dl[2] / 2, dl[1], sm[2]]);
   } else {
     const band = verses.bands[textIds[0]], y = band.top - 0.03;
     const a = toScreen(place(0.06, y, 0.01, _q).project(camera)), b = toScreen(place(0.94, y, 0.01, _q).project(camera));
@@ -265,6 +272,44 @@ function placeGuide() {
     putLabel(gt.order, (a[0] + b[0]) / 2, a[1] - 70, 'center');
   }
   void w;
+}
+
+// Finer places: as the camera comes closer, clusters named by their most telling words appear once they are big
+// enough on screen; closer still, verses near the centre of the view show their references.
+const fineLabels = [], refLabels = [];
+function placeFineLabels(placed) {
+  const w = canvas.clientWidth, h = canvas.clientHeight, show = order.value > 0.6 ? (order.value - 0.6) / 0.4 : 0;
+  for (const f of fineLabels) {
+    if (!show) { f.el.style.opacity = 0; continue; }
+    place(f.u, f.v, terrain.heightAt(f.u, f.v) + 0.03, _p).project(camera); const x = (_p.x + 1) / 2 * w, y = (1 - _p.y) / 2 * h, z = _p.z;
+    place(f.u + f.r, f.v, terrain.heightAt(f.u, f.v) + 0.03, _p).project(camera); const px = Math.abs((_p.x + 1) / 2 * w - x); // the cluster's radius on screen
+    const big = Math.min(1, Math.max(0, (px - 40) / 30)); // fades in as the cluster grows past forty pixels
+    const ok = big > 0 && z < 1 && x > 20 && x < w - 20 && y > 60 && y < h - 130 && !placed.some((q) => Math.abs(q.x - x) < (q.w + f.w) / 2 + 10 && Math.abs(q.y - y) < 22);
+    f.el.style.opacity = ok ? show * big * 0.8 : 0;
+    if (ok) { f.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%)`; placed.push({ x, y, w: f.w }); }
+  }
+  return placed;
+}
+function placeRefLabels(placed) {
+  const w = canvas.clientWidth, h = canvas.clientHeight, near = Math.min(1, Math.max(0, (1.7 - controls.distance) / 0.5)); // only when the camera is close
+  if (!near || !verses.meaning) { for (const r of refLabels) r.el.style.opacity = 0; return; }
+  projectAll();
+  const cx = w / 2, cy = h / 2, cands = [];
+  for (let i = 0, n = screen.length / 3; i < n; i++) {
+    const x = screen[i * 3], y = screen[i * 3 + 1];
+    if (screen[i * 3 + 2] < 1 && x > 40 && x < w - 40 && y > 70 && y < h - 130 && verses.isLit(i)) cands.push([i, (x - cx) ** 2 + (y - cy) ** 2]);
+  }
+  cands.sort((a, b) => a[1] - b[1]);
+  let k = 0;
+  for (const [i] of cands) {
+    if (k >= refLabels.length) break;
+    const x = screen[i * 3] + 9, y = screen[i * 3 + 1], ref = corpus.verses[i][1], lw = ref.length * 6;
+    if (placed.some((q) => Math.abs(q.x - (x + lw / 2)) < (q.w + lw) / 2 + 6 && Math.abs(q.y - y) < 16)) continue;
+    const r = refLabels[k++]; r.el.textContent = ref; r.el.style.color = corpus.texts[corpus.verses[i][0]].colour;
+    r.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(0, -50%)`; r.el.style.opacity = near * 0.85;
+    placed.push({ x: x + lw / 2, y, w: lw });
+  }
+  for (; k < refLabels.length; k++) refLabels[k].el.style.opacity = 0;
 }
 
 // Landmarks: passages people know, named where they sit, in either order; they fly with their verses.
@@ -320,7 +365,7 @@ function applyOrder(m) {
 const bandLabels = [], bookLabels = [];
 let labelKey = '';
 function placeBandLabels() {
-  const w = canvas.clientWidth, h = canvas.clientHeight, narrow = w < 640;
+  const w = canvas.clientWidth, h = canvas.clientHeight, narrow = isNarrow();
   const fade = Math.max(0, 1 - order.value * 3); // gone by the time a third of the flight is done
   let lastY = -1e9;
   for (const { el, u, v } of bandLabels) {
@@ -360,7 +405,7 @@ function frame() {
     verses.setTime(now); applyReading();
   }
   lastFrame = now;
-  placeBandLabels(); placeLandmarks(placeRegionLabels()); placeGuide();
+  placeBandLabels(); { const placed = placeRegionLabels(); placeLandmarks(placed); placeFineLabels(placed); placeRefLabels(placed); } placeGuide();
   resetBtn.hidden = controls.goalTarget.lengthSq() < 1e-4 && Math.abs(controls.goalDistance - controls.home.distance) < 1e-3;
   if (hover && corpus && !controls.dragging) {
     const { x, y } = hover; hover = null;
@@ -409,6 +454,12 @@ async function boot() {
     $('labels').appendChild(el); regionLabels.push({ el, u: r.u, v: r.v, n: r.n, w: r.name.length * (7 + Math.min(8, r.n / 250) * 0.5) });
   }
   regionLabels.sort((a, b) => b.n - a.n);
+  for (const f of regions.fine || []) {
+    const el = document.createElement('div'); el.className = 'fine'; el.textContent = f.name; el.style.color = corpus.texts[f.text].colour;
+    $('labels').appendChild(el); fineLabels.push({ el, u: f.u, v: f.v, r: f.r, n: f.n, w: f.name.length * 6.4 });
+  }
+  fineLabels.sort((a, b) => b.n - a.n);
+  for (let k = 0; k < 36; k++) { const el = document.createElement('div'); el.className = 'ref'; $('labels').appendChild(el); refLabels.push({ el }); }
   { // the guide's anchors: the highest peak, and the two of the six largest regions furthest apart
     const G = layout.density.size, d = layout.density.values; let best = -1;
     for (let i = 0; i < d.length; i++) if (Math.floor(i / G) / (G - 1) > 0.45 && (best < 0 || d[i] > d[best])) best = i; // the nearer half of the ground, so the rule sits mid-screen
