@@ -53,7 +53,7 @@ export class ThreadsLayer {
     let k = 0;
     for (let n = 1; n < indices.length && k + SEG * 6 <= this.trailBuf.length; n++) {
       positionOf(indices[n - 1], this.a); positionOf(indices[n], this.b);
-      const lift = 0.05 + this.a.distanceTo(this.b) * 0.1;
+      const lift = Math.min(0.25, 0.03 + this.a.distanceTo(this.b) * 0.04);
       for (let s = 0; s < SEG; s++) for (const e of [s / SEG, (s + 1) / SEG]) {
         this.trailBuf[k] = this.a.x + (this.b.x - this.a.x) * e; this.trailBuf[k + 1] = this.a.y + (this.b.y - this.a.y) * e + Math.sin(e * Math.PI) * lift; this.trailBuf[k + 2] = this.a.z + (this.b.z - this.a.z) * e; k += 3;
       }
@@ -76,7 +76,7 @@ export class ThreadsLayer {
       positionOf(kin[j], this.b); this.c.set(colours[j]);
       if (reach >= 0.999) { mp.setXYZ(m, this.b.x, this.b.y + 0.01, this.b.z); mc.setXYZ(m, this.c.r, this.c.g, this.c.b); mb.setX(m, 0); m++; }
       if (reach <= 0) continue;
-      const lift = 0.08 + this.a.distanceTo(this.b) * 0.12;
+      const lift = Math.min(0.3, 0.04 + this.a.distanceTo(this.b) * 0.05); // low arcs, so six threads fan out instead of rising as one
       for (let s = 0; s < SEG; s++) {
         for (const e of [s / SEG * reach, (s + 1) / SEG * reach]) {
           this.buf[k] = this.a.x + (this.b.x - this.a.x) * e; this.buf[k + 1] = this.a.y + (this.b.y - this.a.y) * e + Math.sin(e * Math.PI) * lift; this.buf[k + 2] = this.a.z + (this.b.z - this.a.z) * e;
