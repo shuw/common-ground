@@ -113,11 +113,11 @@ function letGo() { held = false; shown = -1; walk.length = 0; card.hidden = true
 // The URL hash carries the moment: #reading for the order, v=<reference> for the verse in hand.
 function syncHash() {
   const parts = [];
+  if (reading.pos > 0.0005) parts.push('t=' + (reading.pos * 100).toFixed(1)); // where the reading stands, in percent; a link opens paused there
   if (order.target === 0) parts.push('reading');
   if (shown >= 0) parts.push('v=' + encodeURIComponent(corpus.verses[shown][1]));
   if (walk.length > 1) parts.push('w=' + walk.slice(-24).map((i) => encodeURIComponent(corpus.verses[i][1])).join('|')); // references hold dots and commas; a bar they never hold
   if (query) parts.push('q=' + encodeURIComponent(query));
-  if (reading.pos > 0.0005) parts.push('t=' + (reading.pos * 100).toFixed(1)); // where the reading stands, in percent; a link opens paused there
   const h = parts.length ? '#' + parts.join('&') : '';
   if (h !== location.hash) history.replaceState(null, '', location.pathname + location.search + h);
 }
@@ -220,11 +220,11 @@ function placeRegionLabels() {
 // The guide: what the three dimensions mean, drawn on the scene itself. A rule up the highest peak for height,
 // a span between two far regions for distance, and notes for colour and, in reading order, for the run of a band.
 const guide = $('guide'), guideLabels = $('guide-labels'), guideBtn = $('guide-btn');
-const gl = { rule: guide.querySelector('.rule'), span: guide.querySelector('.span'), ta: guide.querySelector('.tick.a'), tb: guide.querySelector('.tick.b') };
+const gl = { rule: guide.querySelector('.rule'), span: guide.querySelector('.span'), ta: guide.querySelector('.tick.a'), tb: guide.querySelector('.tick.b'), da: guide.querySelector('.dot.a'), db: guide.querySelector('.dot.b'), lh: guide.querySelector('.lead.h'), ld: guide.querySelector('.lead.d') };
 const gt = { height: guideLabels.querySelector('.height'), span: guideLabels.querySelector('.span'), order: guideLabels.querySelector('.order'), bright: guideLabels.querySelector('.bright'), colour: guideLabels.querySelector('.colour') };
 let guideOn = false, guidePoints = null;
 function showGuide(on) {
-  guideOn = on; guide.style.display = on ? '' : 'none'; guideLabels.hidden = !on; guideLabels.classList.toggle('on', on); guideBtn.setAttribute('aria-pressed', on);
+  guideOn = on; guide.style.display = on ? '' : 'none'; guideLabels.hidden = !on; guideLabels.classList.toggle('on', on); guideBtn.setAttribute('aria-pressed', on); document.body.classList.toggle('guiding', on);
   if (on) card.hidden = true; else try { localStorage.setItem('cg-guided', '1'); } catch {}
 }
 guideBtn.addEventListener('click', () => showGuide(!guideOn));
@@ -233,28 +233,36 @@ const _q = new THREE.Vector3();
 const toScreen = (v) => { const w = canvas.clientWidth, h = canvas.clientHeight; return [(v.x + 1) / 2 * w, (1 - v.y) / 2 * h, v.z < 1]; };
 function setLine(el, a, b) { el.setAttribute('x1', a[0]); el.setAttribute('y1', a[1]); el.setAttribute('x2', b[0]); el.setAttribute('y2', b[1]); el.style.opacity = a[2] && b[2] ? 1 : 0; }
 function putLabel(el, x, y, anchor = 'left') {
-  const w = canvas.clientWidth, h = canvas.clientHeight, lw = Math.min(240, w - 24); // kept inside the screen
+  const w = canvas.clientWidth, h = canvas.clientHeight, lw = Math.min(250, w - 24), lh = el.offsetHeight || 60; // kept inside the screen
   if (anchor === 'center') x -= lw / 2;
-  x = Math.min(w - lw - 12, Math.max(12, x)); y = Math.min(h - 120, Math.max(60, y));
+  x = Math.min(w - lw - 12, Math.max(12, x)); y = Math.min(h - lh - 150, Math.max(150, y));
   el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+  return [x, y, lw, lh];
 }
+function setDot(el, p) { el.setAttribute('cx', p[0]); el.setAttribute('cy', p[1]); el.style.opacity = p[2] ? 1 : 0; }
 function placeGuide() {
   if (!guideOn || !guidePoints) return;
   const meaning = order.value > 0.5, w = canvas.clientWidth;
   gt.height.style.display = gt.span.style.display = meaning ? '' : 'none';
   gt.order.style.display = gt.bright.style.display = meaning ? 'none' : '';
-  gl.rule.style.opacity = gl.span.style.opacity = gl.ta.style.opacity = gl.tb.style.opacity = 0;
+  for (const el of Object.values(gl)) el.style.opacity = 0;
   if (meaning) {
     const { peak, far } = guidePoints;
+    // height: a rule from the ground to the highest peak, with a short leader to its label
     const foot = toScreen(place(peak[0], peak[1], 0, _q).project(camera)), top = toScreen(place(peak[0], peak[1], terrain.heightAt(peak[0], peak[1]) + 0.25, _q).project(camera));
-    setLine(gl.rule, foot, top); putLabel(gt.height, top[0] + 10, top[1] - 12);
+    setLine(gl.rule, foot, top); setLine(gl.ta, [foot[0] - 6, foot[1], foot[2]], [foot[0] + 6, foot[1], foot[2]]); setLine(gl.tb, [top[0] - 6, top[1], top[2]], [top[0] + 6, top[1], top[2]]);
+    const mid = [(foot[0] + top[0]) / 2, (foot[1] + top[1]) / 2, foot[2] && top[2]];
+    const hl = putLabel(gt.height, mid[0] + 44, mid[1] - 24); setLine(gl.lh, mid, [hl[0] < mid[0] ? hl[0] + hl[2] : hl[0], hl[1] + 20, mid[2]]);
+    // distance: a dashed span between two far regions, dotted at both ends, with a leader to its label
     const a = toScreen(place(far[0][0], far[0][1], terrain.heightAt(far[0][0], far[0][1]) + 0.04, _q).project(camera)), b = toScreen(place(far[1][0], far[1][1], terrain.heightAt(far[1][0], far[1][1]) + 0.04, _q).project(camera));
-    setLine(gl.span, a, b); putLabel(gt.span, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2 + 10, 'center');
+    setLine(gl.span, a, b); setDot(gl.da, a); setDot(gl.db, b);
+    const sm = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, a[2] && b[2]];
+    const dl = putLabel(gt.span, sm[0] - 125, sm[1] + (canvas.clientWidth < 640 ? 120 : 36), 'left'); // lower on a phone, clear of the height label setLine(gl.ld, sm, [dl[0] + dl[2] / 2, dl[1], sm[2]]);
   } else {
     const band = verses.bands[textIds[0]], y = band.top - 0.03;
     const a = toScreen(place(0.06, y, 0.01, _q).project(camera)), b = toScreen(place(0.94, y, 0.01, _q).project(camera));
     setLine(gl.rule, a, b); setLine(gl.ta, [a[0], a[1] - 5, a[2]], [a[0], a[1] + 5, a[2]]); setLine(gl.tb, [b[0], b[1] - 5, b[2]], [b[0], b[1] + 5, b[2]]);
-    putLabel(gt.order, (a[0] + b[0]) / 2, a[1] - 52, 'center');
+    putLabel(gt.order, (a[0] + b[0]) / 2, a[1] - 70, 'center');
   }
   void w;
 }
@@ -402,8 +410,8 @@ async function boot() {
   }
   regionLabels.sort((a, b) => b.n - a.n);
   { // the guide's anchors: the highest peak, and the two of the six largest regions furthest apart
-    const G = layout.density.size, d = layout.density.values; let best = 0;
-    for (let i = 1; i < d.length; i++) if (d[i] > d[best]) best = i;
+    const G = layout.density.size, d = layout.density.values; let best = -1;
+    for (let i = 0; i < d.length; i++) if (Math.floor(i / G) / (G - 1) > 0.45 && (best < 0 || d[i] > d[best])) best = i; // the nearer half of the ground, so the rule sits mid-screen
     const big = regionLabels.slice(0, 6); let far = null, fd = -1;
     for (const a of big) for (const b of big) { const dd = Math.hypot(a.u - b.u, a.v - b.v); if (dd > fd) { fd = dd; far = [[a.u, a.v], [b.u, b.v]]; } }
     guidePoints = { peak: [(best % G) / (G - 1), Math.floor(best / G) / (G - 1)], far };

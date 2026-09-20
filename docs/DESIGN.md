@@ -28,7 +28,7 @@ A verse's kinship is its mixing score against chance: the share of its fifteen n
 
 ## The guide
 
-The three dimensions are explained on the scene rather than in a paragraph: a rule up the highest peak for height (how many verses stand here), a dashed span between the two largest regions furthest apart for distance (how alike in meaning), and a note by the legend for colour. In reading order the rule runs along the first band for reading order and a note sits by the kinship slider for brightness. It opens on the first visit and any move of the hand dismisses it; the "how to read it" pill brings it back.
+The three dimensions are explained on the scene rather than in a paragraph, under a scrim that dims the map and its labels: an intro card at the top left, a rule up the highest peak in the nearer half of the ground for height (how many verses stand here) with a leader to its label, a dashed span dotted at both ends between the two largest regions furthest apart for distance (how alike in meaning), and a note by the legend for colour. In reading order the rule runs along the first band for reading order and a note sits by the kinship slider for brightness. It opens on the first visit and any move of the hand dismisses it; the "how to read it" pill brings it back.
 
 ## Hover
 
@@ -45,6 +45,10 @@ The URL hash carries the moment and nothing else: `reading` for the order, `v=<r
 ## The reading playhead
 
 One position runs through every text at once, by fraction, a full reading in three minutes, paused at the start until the play button, space, or a drag on the scrubber moves it. At the start every verse is lit and twinkles a little on its own phase; the rolling window fades in over the first few percent of the reading, so dragging the scrubber back to the left lights everything again, and the × beside the scrubber returns there. Escape pauses a playing reading. It sits at the bottom centre. Verses just behind the playhead, the last 4.5% of each text, glow larger and whiter; verses already read stay at 60%; verses ahead sit at 35%. In the meaning view the seven fronts wander the terrain together, each book tracing its own path; in reading order it is a wavefront sweeping left to right. The line under the scrubber names the book each text is in at that moment, in its colour. Darkening the unread verses further was tried and made the map look dead; the levels are set so the map still reads as a whole. A search takes the playhead's light off so the hits are clear.
+
+## Fat lines and the instance count
+
+The threads and the walk trail are `LineSegments2` fat lines. The renderer remembers, the first time it binds a geometry, how many instances its buffers held and never raises that number; a thread set that grew from two arcs on its first frame to six was therefore drawn at two for the rest of its life, which looked like a single ray. After every change of segments the layer forgets that memory (`geometry._maxInstanceCount = undefined`).
 
 ## Two orders
 

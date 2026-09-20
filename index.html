@@ -19,14 +19,14 @@
     <p>Every verse of seven founding texts, placed by what it means.</p>
   </div>
   <div id="labels"></div>
-  <svg id="guide" style="display:none" aria-hidden="true"><line class="rule" /><line class="span" /><line class="tick a" /><line class="tick b" /></svg>
+  <svg id="guide" style="display:none" aria-hidden="true"><rect class="scrim" width="100%" height="100%" /><line class="rule" /><line class="tick a" /><line class="tick b" /><line class="span" /><circle class="dot a" r="3" /><circle class="dot b" r="3" /><line class="lead h" /><line class="lead d" /></svg>
   <div id="guide-labels" hidden>
-    <div class="g height"><b>height</b> how many verses stand here</div>
-    <div class="g span"><b>distance</b> how alike in meaning: far apart is little in common</div>
-    <div class="g order"><b>left to right</b> reading order, first verse to last</div>
-    <div class="g bright"><b>brightness</b> kinship: how much a verse's neighbours come from other texts</div>
-    <div class="g colour"><b>colour</b> which text</div>
-    <button class="g dismiss" type="button">got it</button>
+    <div class="g intro"><b>How to read it</b>Every verse is a point. Where it sits is what it means; near verses say near things.<button class="dismiss" type="button">got it</button></div>
+    <div class="g height"><b>height</b>how many verses stand here</div>
+    <div class="g span"><b>distance</b>how alike in meaning: far apart is little in common</div>
+    <div class="g order"><b>left to right</b>reading order, first verse to last</div>
+    <div class="g bright"><b>brightness</b>kinship: how much a verse's neighbours come from other texts</div>
+    <div class="g colour"><b>colour</b>which text</div>
   </div>
   <form id="search" role="search"><input id="q" type="search" placeholder="search by meaning: love your enemies, the wind, a father's mercy…" autocomplete="off" spellcheck="false"><kbd class="hint">/</kbd><button type="button" id="clear" hidden aria-label="Clear search">×</button></form>
   <div id="results" hidden><div class="how"></div><ul></ul></div>

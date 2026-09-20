@@ -58,7 +58,7 @@ export class ThreadsLayer {
         this.trailBuf[k] = this.a.x + (this.b.x - this.a.x) * e; this.trailBuf[k + 1] = this.a.y + (this.b.y - this.a.y) * e + Math.sin(e * Math.PI) * lift; this.trailBuf[k + 2] = this.a.z + (this.b.z - this.a.z) * e; k += 3;
       }
     }
-    this.trailGeo.setPositions(this.trailBuf.subarray(0, k)); this.trail.visible = true;
+    this.trailGeo.setPositions(this.trailBuf.subarray(0, k)); this.trailGeo._maxInstanceCount = undefined; this.trail.visible = true;
   }
 
   resize(w, h, pixelRatio) { for (const m of [this.core, this.halo, this.trailMaterial]) m.resolution.set(w, h); this.markMaterial.uniforms.uPixelRatio.value = pixelRatio; this.pulseMaterial.uniforms.uPixelRatio.value = pixelRatio; }
@@ -87,7 +87,9 @@ export class ThreadsLayer {
         }
       }
     }
-    if (k > 0) { this.geo.setPositions(this.buf.subarray(0, k)); this.geo.setColors(this.cbuf.subarray(0, k)); }
+    // the renderer remembers the instance count it first saw for a geometry and never raises it, so a geometry that
+    // grew from two threads to six would stay at two: forget that memory each time the segments change
+    if (k > 0) { this.geo.setPositions(this.buf.subarray(0, k)); this.geo.setColors(this.cbuf.subarray(0, k)); this.geo._maxInstanceCount = undefined; }
     this.group.children[0].visible = this.group.children[1].visible = k > 0;
     this.marks.geometry.setDrawRange(0, m); mp.needsUpdate = true; mc.needsUpdate = true; mb.needsUpdate = true;
     this.markMaterial.uniforms.uT.value = Math.min(1, t / 0.3);
