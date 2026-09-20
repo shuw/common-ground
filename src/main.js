@@ -117,10 +117,11 @@ function syncHash() {
   if (shown >= 0) parts.push('v=' + encodeURIComponent(corpus.verses[shown][1]));
   if (walk.length > 1) parts.push('w=' + walk.slice(-24).map((i) => encodeURIComponent(corpus.verses[i][1])).join('|')); // references hold dots and commas; a bar they never hold
   if (query) parts.push('q=' + encodeURIComponent(query));
+  if (reading.pos > 0.0005) parts.push('t=' + (reading.pos * 100).toFixed(1)); // where the reading stands, in percent; a link opens paused there
   const h = parts.length ? '#' + parts.join('&') : '';
   if (h !== location.hash) history.replaceState(null, '', location.pathname + location.search + h);
 }
-function readHash() { const p = new URLSearchParams(location.hash.slice(1)); return { reading: p.has('reading'), v: p.get('v'), q: p.get('q'), w: p.get('w') }; }
+function readHash() { const p = new URLSearchParams(location.hash.slice(1)); return { reading: p.has('reading'), v: p.get('v'), q: p.get('q'), w: p.get('w'), t: p.get('t') }; }
 let hover = null, held = false, overCard = false, down = null;
 canvas.addEventListener('pointermove', (e) => { hover = { x: e.clientX, y: e.clientY }; });
 // Click and walk. A click on a verse holds it, so the card stays put. A click on one of its six kin, on the ground
@@ -284,7 +285,7 @@ function applyReading() {
   const key = where.map((w) => w[1]).join('|');
   if (key !== whereKey) { whereKey = key; whereEl.innerHTML = where.map(([t, name]) => `<span style="color:${corpus.texts[t].colour}">${esc(name)}</span>`).join(''); }
 }
-function setReading(mode) { reading.mode = mode; playBtn.setAttribute('aria-pressed', mode === 'playing'); applyReading(); }
+function setReading(mode) { reading.mode = mode; playBtn.setAttribute('aria-pressed', mode === 'playing'); applyReading(); if (mode !== 'playing') syncHash(); }
 playBtn.addEventListener('click', () => setReading(reading.mode === 'playing' ? 'paused' : 'playing'));
 stopBtn.addEventListener('click', () => { reading.pos = 0; setReading('paused'); });
 posInput.addEventListener('input', () => { reading.pos = posInput.value / 1000; setReading('paused'); });
@@ -346,7 +347,7 @@ function frame() {
   }
   if (corpus) {
     const dt = Math.min(0.1, now - lastFrame), want = query ? 0 : 1; // a search has its own light
-    if (reading.mode === 'playing') reading.pos = (reading.pos + dt / reading.seconds) % 1;
+    if (reading.mode === 'playing') { reading.pos = (reading.pos + dt / reading.seconds) % 1; if (Math.floor(now) !== Math.floor(now - dt)) syncHash(); }
     if (Math.abs(reading.on - want) > 0.001) reading.on += (want - reading.on) * (1 - Math.exp(-dt * 3.5)); else reading.on = want;
     verses.setTime(now); applyReading();
   }
@@ -421,6 +422,7 @@ async function boot() {
   if (want.w) for (const ref of want.w.split('|')) { const i = refIndex.get(ref); if (i !== undefined) walk.push(i); }
   if (wanted >= 0) { if (walk[walk.length - 1] !== wanted) walk.length = 0; hold(wanted); } // held, with the view left alone
   if (want.q) runSearch(want.q);
+  if (want.t) { reading.pos = Math.min(0.999, Math.max(0, parseFloat(want.t) / 100)) || 0; reading.on = 1; applyReading(); }
   let guided = false; try { guided = !!localStorage.getItem('cg-guided'); } catch {}
   if (!location.hash && !guided) { // the first visit opens with the guide, which any move of the hand dismisses
     showGuide(true);

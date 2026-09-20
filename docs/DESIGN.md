@@ -40,7 +40,7 @@ A click on a verse holds it: the card stays while the pointer wanders, until the
 
 ## Permalinks
 
-The URL hash carries the moment and nothing else: `reading` for the order, `v=<reference>` for the verse in hand (the page opens with it held and its threads drawn, the view left alone, so a refresh changes nothing), `q=<query>` for a search.
+The URL hash carries the moment and nothing else: `reading` for the order, `v=<reference>` for the verse in hand (the page opens with it held and its threads drawn, the view left alone, so a refresh changes nothing), `q=<query>` for a search, `t=<percent>` for where the reading stands (a link opens paused there; while playing the hash follows once a second).
 
 ## The reading playhead
 
