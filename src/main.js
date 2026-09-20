@@ -411,7 +411,7 @@ async function boot() {
   applyOrder(want.reading ? 0 : 1); order.target = order.value; // the page opens on the terrain; #reading opens on the bands
   syncOrderButtons();
   if (want.w) for (const ref of want.w.split('|')) { const i = refIndex.get(ref); if (i !== undefined) walk.push(i); }
-  if (wanted >= 0) { if (walk[walk.length - 1] !== wanted) walk.length = 0; hold(wanted); const p = verses.positionOf(wanted, new THREE.Vector3()); controls.flyTo(p.x, p.z, EXTENT * 0.45); }
+  if (wanted >= 0) { if (walk[walk.length - 1] !== wanted) walk.length = 0; hold(wanted); } // held, with the view left alone
   if (want.q) runSearch(want.q);
   let guided = false; try { guided = !!localStorage.getItem('cg-guided'); } catch {}
   if (!location.hash && !guided) { // the first visit opens with the guide, which any move of the hand dismisses
