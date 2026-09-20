@@ -2,7 +2,7 @@
 
 Every verse of seven founding texts, placed by what it means. Where the colours pile up, the traditions say the same thing.
 
-Not yet running anywhere. See [docs/DESIGN.md](docs/DESIGN.md) for how it is made and what to be careful of.
+Live at https://shuw.github.io/common-ground/. See [docs/DESIGN.md](docs/DESIGN.md) for how it is made and what to be careful of.
 
 ## Running it
 
