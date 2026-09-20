@@ -285,7 +285,7 @@ function placeFineLabels(placed) {
     place(f.u + f.r, f.v, terrain.heightAt(f.u, f.v) + 0.03, _p).project(camera); const px = Math.abs((_p.x + 1) / 2 * w - x); // the cluster's radius on screen
     const big = Math.min(1, Math.max(0, (px - 40) / 30)); // fades in as the cluster grows past forty pixels
     const ok = big > 0 && z < 1 && x > 20 && x < w - 20 && y > 60 && y < h - 130 && !placed.some((q) => Math.abs(q.x - x) < (q.w + f.w) / 2 + 10 && Math.abs(q.y - y) < 22);
-    f.el.style.opacity = ok ? show * big * 0.8 : 0;
+    f.el.style.opacity = ok ? show * big * 0.9 : 0;
     if (ok) { f.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(-50%, -50%)`; placed.push({ x, y, w: f.w }); }
   }
   return placed;
@@ -303,9 +303,9 @@ function placeRefLabels(placed) {
   let k = 0;
   for (const [i] of cands) {
     if (k >= refLabels.length) break;
-    const x = screen[i * 3] + 9, y = screen[i * 3 + 1], ref = corpus.verses[i][1], lw = ref.length * 6;
+    const x = screen[i * 3] + 9, y = screen[i * 3 + 1], ref = corpus.verses[i][1], lw = ref.length * 7 + 12;
     if (placed.some((q) => Math.abs(q.x - (x + lw / 2)) < (q.w + lw) / 2 + 6 && Math.abs(q.y - y) < 16)) continue;
-    const r = refLabels[k++]; r.el.textContent = ref; r.el.style.color = corpus.texts[corpus.verses[i][0]].colour;
+    const r = refLabels[k++]; r.el.textContent = ref; r.el.style.setProperty('--c', corpus.texts[corpus.verses[i][0]].colour);
     r.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(0, -50%)`; r.el.style.opacity = near * 0.85;
     placed.push({ x: x + lw / 2, y, w: lw });
   }
@@ -455,8 +455,8 @@ async function boot() {
   }
   regionLabels.sort((a, b) => b.n - a.n);
   for (const f of regions.fine || []) {
-    const el = document.createElement('div'); el.className = 'fine'; el.textContent = f.name; el.style.color = corpus.texts[f.text].colour;
-    $('labels').appendChild(el); fineLabels.push({ el, u: f.u, v: f.v, r: f.r, n: f.n, w: f.name.length * 6.4 });
+    const el = document.createElement('div'); el.className = 'fine'; el.textContent = f.name;
+    $('labels').appendChild(el); fineLabels.push({ el, u: f.u, v: f.v, r: f.r, n: f.n, w: f.name.length * 7.5 });
   }
   fineLabels.sort((a, b) => b.n - a.n);
   for (let k = 0; k < 36; k++) { const el = document.createElement('div'); el.className = 'ref'; $('labels').appendChild(el); refLabels.push({ el }); }
