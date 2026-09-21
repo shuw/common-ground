@@ -94,7 +94,7 @@ Each text carries the symbol of its tradition, set in `scripts/build-corpus.py` 
 
 ## Claims and care
 
-The site's loudest line is the one most open to objection, so it is kept exact: where the colours meet, the traditions say similar things, not that they agree. Closeness in the embedding space is closeness of wording and subject; the guide's intro and the About panel both say that two verses can sit side by side and disagree. About also says that the seven texts are a starting set rather than a canon, that "Hebrew Bible" here means the thirty-nine books in the King James order, that the region names are one reader's captions, that the symbols mark provenance and nothing more, and where to say so if something is wrong. The symbols appear in the legend, the band labels, the main card heading and the landmark and reference labels, but not on the kin cards or the search results, so they mark rather than brand.
+The site's loudest line is the one most open to objection, so it is kept exact: where the colours meet, the traditions say similar things, not that they agree. Closeness in the embedding space is closeness of wording and subject; the guide's intro and the About panel both say that two verses can sit side by side and disagree. About also says that the seven texts are a starting set rather than a canon, that "Hebrew Bible" here means the thirty-nine books in the King James order, that the region names are one reader's captions, that the symbols mark provenance and nothing more, and where to say so if something is wrong. The symbols appear in the legend, the band labels, the card headings including the kin cards, and the landmark and reference labels, but not on the search results or the region names.
 
 ## The corpus
 
