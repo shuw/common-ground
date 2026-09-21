@@ -356,9 +356,9 @@ function placeRefLabels(placed) {
   let k = 0;
   for (const [i] of cands) {
     if (k >= refLabels.length) break;
-    const x = screen[i * 3] + 9, y = screen[i * 3 + 1], ref = corpus.verses[i][1], lw = ref.length * 7 + 12;
+    const x = screen[i * 3] + 9, y = screen[i * 3 + 1], ref = corpus.verses[i][1], lw = ref.length * 7 + 26;
     if (placed.some((q) => Math.abs(q.x - (x + lw / 2)) < (q.w + lw) / 2 + 6 && Math.abs(q.y - y) < 16)) continue;
-    const r = refLabels[k++]; r.el.textContent = ref; r.el.style.setProperty('--c', corpus.texts[corpus.verses[i][0]].colour);
+    const r = refLabels[k++]; const tx = corpus.texts[corpus.verses[i][0]]; r.el.innerHTML = `<span class="sym" style="color:${tx.colour}">${tx.symbol}</span>${esc(ref)}`;
     r.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(0, -50%)`; r.el.style.opacity = near * 0.85;
     placed.push({ x: x + lw / 2, y, w: lw });
   }
@@ -522,15 +522,17 @@ async function boot() {
   }
   for (const r of regions.regions) {
     if (!r.name) continue;
-    const el = document.createElement('div'); el.className = 'region'; el.textContent = r.name;
+    const el = document.createElement('div'); el.className = 'region';
+    const parts = Object.entries(r.share).filter(([, n]) => n / r.n >= 0.12).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    el.innerHTML = `${esc(r.name)}<span class="syms">${parts.map(([t]) => `<span style="color:${corpus.texts[t].colour}">${corpus.texts[t].symbol}</span>`).join('')}</span>`;
     el.style.fontSize = `${(12 + Math.min(8, r.n / 250)).toFixed(1)}px`;
     el.title = Object.entries(r.share).filter(([, n]) => n).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${corpus.texts[t].name} ${n.toLocaleString()}`).join(' · ');
     $('labels').appendChild(el); regionLabels.push({ el, u: r.u, v: r.v, n: r.n, w: r.name.length * (7 + Math.min(8, r.n / 250) * 0.5) });
   }
   regionLabels.sort((a, b) => b.n - a.n);
   for (const f of regions.fine || []) {
-    const el = document.createElement('div'); el.className = 'fine'; el.textContent = f.name;
-    $('labels').appendChild(el); fineLabels.push({ el, u: f.u, v: f.v, r: f.r, n: f.n, w: f.name.length * 7.5 });
+    const el = document.createElement('div'); el.className = 'fine'; el.innerHTML = `<span class="sym" style="color:${corpus.texts[f.text].colour}">${corpus.texts[f.text].symbol}</span>${esc(f.name)}`;
+    $('labels').appendChild(el); fineLabels.push({ el, u: f.u, v: f.v, r: f.r, n: f.n, w: f.name.length * 7.5 + 18 });
   }
   fineLabels.sort((a, b) => b.n - a.n);
   for (let k = 0; k < 36; k++) { const el = document.createElement('div'); el.className = 'ref'; $('labels').appendChild(el); refLabels.push({ el }); }
@@ -543,9 +545,9 @@ async function boot() {
   }
   for (const [ref, name] of marks) {
     const i = refIndex.get(ref); if (i === undefined) { console.warn('no such landmark', ref); continue; }
-    const el = document.createElement('button'); el.className = 'landmark'; el.textContent = name; el.title = ref; el.style.color = corpus.texts[corpus.verses[i][0]].colour;
+    const el = document.createElement('button'); el.className = 'landmark'; el.innerHTML = `<span class="sym">${corpus.texts[corpus.verses[i][0]].symbol}</span>${esc(name)}`; el.title = ref; el.style.color = corpus.texts[corpus.verses[i][0]].colour;
     el.addEventListener('click', () => step(i));
-    $('labels').appendChild(el); landmarks.push({ el, i, w: name.length * 6.2 + 18 });
+    $('labels').appendChild(el); landmarks.push({ el, i, w: name.length * 6.2 + 30 });
   }
   about.querySelector('.texts').innerHTML = textIds.map((t) => { const x = corpus.texts[t]; return `<li><i style="color:${x.colour}">${x.symbol}</i><b>${x.name}</b> · ${esc(x.translation)} · <a href="${x.url}" target="_blank" rel="noopener">${esc(x.source)}</a> · ${x.licence} · ${x.verses.toLocaleString()} verses</li>`; }).join('');
   setReading('paused');
