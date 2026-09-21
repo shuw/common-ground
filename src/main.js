@@ -118,7 +118,7 @@ function showVerse(i) {
   if (i === shown && !card.hidden) return; // already up: nothing to redraw, nothing to replay
   const [t, ref, text] = corpus.verses[i], info = corpus.texts[t];
   card.style.setProperty('--c', info.colour);
-  card.querySelector('.who').innerHTML = `<span class="sym">${info.symbol}</span>${esc(info.name)} · ${esc(ref)}`;
+  card.querySelector('.who').innerHTML = `<span class="sym">${esc(info.symbol)}</span>${esc(info.name)} · ${esc(ref)}`;
   card.querySelector('.verse').textContent = text;
   const shared = verses.kin[i], company = shared < 0.15 ? 'keeps its own company' : shared < 0.5 ? 'some shared ground' : shared < 0.85 ? 'shared ground' : 'common ground';
   card.querySelector('.tr').innerHTML = `${esc(info.translation)} · <span title="How many of this verse's nearest neighbours belong to other texts, against chance">${company} · ${(shared * 100).toFixed(0)}%</span> · <a href="${info.url}" target="_blank" rel="noopener">source ↗</a> · <button class="link" type="button" title="Copy a link to this verse">copy link</button>`;
@@ -127,7 +127,7 @@ function showVerse(i) {
   let n = 0; // each kin card arrives as its thread lands: the n-th thread reaches at 200 ms + 10 ms per step
   // how close each kin really is, as a level of five: each level is a fifth of all nearest-kin pairs in the corpus (quintiles at cosine 0.86, 0.87, 0.88, 0.90)
   const level = (sim) => sim < 223 ? 1 : sim < 225 ? 2 : sim < 227 ? 3 : sim < 231 ? 4 : 5; // fifths of the pairs that survive the cut
-  const kins = kinOf(i).map((j, k) => [j, k]).filter(([j]) => j >= 0).sort((a, b) => kin.sim[i * 7 + b[1]] - kin.sim[i * 7 + a[1]]).map(([j, k]) => { const sim = kin.sim[i * 7 + k], l = level(sim);  return `<div class="k l${l}" data-k="${k}" data-verse="${j}" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b><span class="sym">${corpus.texts[textIds[k]].symbol}</span>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}<i class="bar" title="How close in meaning: ${l} of 5 (cosine ${(sim / 255).toFixed(2)})"><b style="width:${l * 20}%"></b></i></b><span>${esc(corpus.verses[j][2])}</span></button></div>`; }).join('');
+  const kins = kinOf(i).map((j, k) => [j, k]).filter(([j]) => j >= 0).sort((a, b) => kin.sim[i * 7 + b[1]] - kin.sim[i * 7 + a[1]]).map(([j, k]) => { const sim = kin.sim[i * 7 + k], l = level(sim);  return `<div class="k l${l}" data-k="${k}" data-verse="${j}" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b><span class="sym">${esc(corpus.texts[textIds[k]].symbol)}</span>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}<i class="bar" title="How close in meaning: ${l} of 5 (cosine ${(sim / 255).toFixed(2)})"><b style="width:${l * 20}%"></b></i></b><span>${esc(corpus.verses[j][2])}</span></button></div>`; }).join('');
   const narrow = isNarrow(); // on a phone the kin wait behind a tap
   const shownKin = (kins.match(/class="k /g) || []).length;
   card.querySelector('.more').innerHTML = around + (narrow && shownKin ? `<button class="expand" type="button">nearest in ${shownKin} other texts <span>▾</span></button>` : '');
@@ -358,7 +358,7 @@ function placeRefLabels(placed) {
     if (k >= refLabels.length) break;
     const x = screen[i * 3] + 9, y = screen[i * 3 + 1], ref = corpus.verses[i][1], lw = ref.length * 7 + 26;
     if (placed.some((q) => Math.abs(q.x - (x + lw / 2)) < (q.w + lw) / 2 + 6 && Math.abs(q.y - y) < 16)) continue;
-    const r = refLabels[k++]; const tx = corpus.texts[corpus.verses[i][0]]; r.el.innerHTML = `<span class="sym" style="color:${tx.colour}">${tx.symbol}</span>${esc(ref)}`;
+    const r = refLabels[k++]; const tx = corpus.texts[corpus.verses[i][0]]; r.el.innerHTML = `<span class="sym" style="color:${tx.colour}">${esc(tx.symbol)}</span>${esc(ref)}`;
     r.el.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) translate(0, -50%)`; r.el.style.opacity = near * 0.85;
     placed.push({ x: x + lw / 2, y, w: lw });
   }
@@ -543,11 +543,11 @@ async function boot() {
   }
   for (const [ref, name] of marks) {
     const i = refIndex.get(ref); if (i === undefined) { console.warn('no such landmark', ref); continue; }
-    const el = document.createElement('button'); el.className = 'landmark'; el.innerHTML = `<span class="sym">${corpus.texts[corpus.verses[i][0]].symbol}</span>${esc(name)}`; el.title = ref; el.style.color = corpus.texts[corpus.verses[i][0]].colour;
+    const el = document.createElement('button'); el.className = 'landmark'; el.innerHTML = `<span class="sym">${esc(corpus.texts[corpus.verses[i][0]].symbol)}</span>${esc(name)}`; el.title = ref; el.style.color = corpus.texts[corpus.verses[i][0]].colour;
     el.addEventListener('click', () => step(i));
     $('labels').appendChild(el); landmarks.push({ el, i, w: name.length * 6.2 + 30 });
   }
-  about.querySelector('.texts').innerHTML = textIds.map((t) => { const x = corpus.texts[t]; return `<li><i style="color:${x.colour}">${x.symbol}</i><b>${x.name}</b> · ${esc(x.translation)} · <a href="${x.url}" target="_blank" rel="noopener">${esc(x.source)}</a> · ${x.licence} · ${x.verses.toLocaleString()} verses</li>`; }).join('');
+  about.querySelector('.texts').innerHTML = textIds.map((t) => { const x = corpus.texts[t]; return `<li><i style="color:${x.colour}">${esc(x.symbol)}</i><b>${x.name}</b> · ${esc(x.translation)} · <a href="${x.url}" target="_blank" rel="noopener">${esc(x.source)}</a> · ${x.licence} · ${x.verses.toLocaleString()} verses</li>`; }).join('');
   setReading('paused');
   const want = readHash(), wanted = want.v ? (refIndex.get(want.v) ?? -1) : -1;
   applyOrder(want.reading ? 0 : 1); order.target = order.value; // the page opens on the terrain; #reading opens on the bands
@@ -562,7 +562,7 @@ async function boot() {
     const off = () => { if (guideOn) showGuide(false); for (const ev of ['pointerdown', 'wheel', 'keydown']) window.removeEventListener(ev, off); };
     setTimeout(() => { for (const ev of ['pointerdown', 'wheel', 'keydown']) window.addEventListener(ev, off); }, 600);
   }
-  $('legend').innerHTML = Object.entries(corpus.texts).map(([k, t]) => `<span><i style="color:${t.colour}">${t.symbol}</i>${t.name} <b>${t.verses.toLocaleString()}</b></span>`).join('');
+  $('legend').innerHTML = Object.entries(corpus.texts).map(([k, t]) => `<span><i style="color:${t.colour}">${esc(t.symbol)}</i>${t.name} <b>${t.verses.toLocaleString()}</b></span>`).join('');
   $('loading').classList.add('gone');
   requestAnimationFrame(frame);
 }
