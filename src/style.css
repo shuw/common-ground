@@ -1,7 +1,7 @@
 :root { color-scheme: dark; --ink: #0f1316; --panel: rgba(18, 23, 28, 0.985); --line: rgba(232, 226, 214, 0.14); --bone: #e8e2d6; --dim: #a39d92; --faint: #6e6960; --accent: #d7b46a;
   --serif: "Cormorant Garamond", "Iowan Old Style", Georgia, serif; --sans: "Source Sans 3", "Helvetica Neue", Arial, sans-serif; --mono: "IBM Plex Mono", Menlo, Consolas, monospace; }
 html, body { height: 100%; }
-body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(--sans); font-size: 14px; line-height: 1.45; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; }
+body { margin: 0; background: var(--ink); color: var(--bone); font-family: var(--sans); font-size: 14px; line-height: 1.45; overflow: hidden; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; touch-action: none; overscroll-behavior: none; }
 #scene { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 #title { position: fixed; left: 20px; top: calc(16px + env(safe-area-inset-top, 0px)); pointer-events: none; }
 #title h1 { font-family: var(--serif); font-weight: 500; font-size: 30px; margin: 0; line-height: 1; display: flex; align-items: center; gap: 10px; }
@@ -146,3 +146,6 @@ body.guiding #labels { opacity: 0.12; }
 #card .k b i { float: right; font-style: normal; font-size: 8px; letter-spacing: 0.12em; color: var(--accent); cursor: help; }
 #card .k.l1, #card .k.l2 { opacity: 0.65; }
 #card .k.l1:hover, #card .k.l2:hover { opacity: 1; }
+#reading, #order, #tools, #legend, #search { touch-action: none; }
+#reading #pos { touch-action: pan-x; }
+#card, #about, #help, #results { touch-action: pan-y; }

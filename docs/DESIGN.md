@@ -62,6 +62,14 @@ One position runs through every text at once, by fraction, a full reading in thr
 
 The threads and the walk trail are `LineSegments2` fat lines. The renderer remembers, the first time it binds a geometry, how many instances its buffers held and never raises that number; a thread set that grew from two arcs on its first frame to six was therefore drawn at two for the rest of its life, which looked like a single ray. After every change of segments the layer forgets that memory (`geometry._maxInstanceCount = undefined`).
 
+## Nothing zooms but the map
+
+A pinch or ctrl+wheel anywhere on the page zooms the map, never the page: a document-level wheel handler takes every wheel that is not over the canvas or a scrolling panel, and Safari's own gesture events are cancelled. A slider or button lets go of focus as soon as it is used, and the page's keys ignore a focused control, so arrow keys and space go back to the map after a drag on the scrubber.
+
+## The void
+
+The ground where no verse stands is painted the background colour, so the terrain has no visible edge and appears to rise out of the void rather than sit on a plate. The colour is set once in the terrain shader to match the page's ink.
+
 ## Two orders
 
 Every verse has two places: where it sits in its book, and where its meaning puts it. The page opens on the second, the terrain. Reading order lays each text out as a band with its verses left to right and a seam between its books (names appear once a book is wide enough on screen to carry one). The toggle runs the flight: the terrain sinks and every verse flies to its band, each one leaving a little after the one before it in its book, and back again the books unravel into the landscape. The toggle at the bottom right (or `o`) runs the same flight either way; `#reading` in the URL opens on the bands and stays there.

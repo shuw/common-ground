@@ -19,6 +19,8 @@ const FRAG = /* glsl */`
     float lit = 0.35 + 0.65 * max(dot(vNormal, sun), 0.0);
     vec3 low = vec3(0.075, 0.095, 0.11), high = vec3(0.34, 0.33, 0.30);
     vec3 c = mix(low, high, pow(h, 0.7)) * lit;
+    // where no verse stands the ground is the void itself, so the plane has no visible edge
+    c = mix(vec3(0.059, 0.075, 0.086), c, smoothstep(0.0, 0.05, h));
     gl_FragColor = vec4(c, 1.0);
   }`;
 

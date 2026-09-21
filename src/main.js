@@ -37,14 +37,25 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
+// The page itself never zooms: a pinch or ctrl+wheel anywhere zooms the map instead (the panels that scroll keep a plain wheel).
+document.addEventListener('wheel', (e) => {
+  if (e.target === canvas) return; // the camera has this one
+  const scrolls = e.target.closest('#card, #about, #help, #results');
+  if (e.ctrlKey || !scrolls) { e.preventDefault(); if (e.ctrlKey) controls.zoomAt(Math.exp(e.deltaY * 0.0018), e.clientX, e.clientY); }
+}, { passive: false });
+for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault()); // Safari's own pinch
+// a slider or button that was just used lets go of focus, so the arrow keys and space go back to the map
+for (const el of document.querySelectorAll('input[type=range], button')) el.addEventListener('pointerup', () => setTimeout(() => el.blur(), 0));
+
 // Keys: arrows slide the ground, + and - zoom, z resets the view; o flips the order; space plays and pauses the reading.
 const resetBtn = $('reset');
 resetBtn.addEventListener('click', () => controls.goHome());
 const help = $('help'), helpBtn = $('help-btn');
 function showHelp(on) { help.hidden = !on; helpBtn.setAttribute('aria-expanded', on); if (on) { card.hidden = true; about.hidden = true; aboutBtn.setAttribute('aria-expanded', false); } }
 helpBtn.addEventListener('click', () => showHelp(help.hidden));
+const inControl = (ev) => ev.target === qInput || ev.target.matches?.('input, textarea, select'); // a focused control keeps its own keys
 document.addEventListener('keydown', (ev) => {
-  if (ev.metaKey || ev.ctrlKey || ev.altKey || ev.target === qInput) return;
+  if (ev.metaKey || ev.ctrlKey || ev.altKey || inControl(ev)) return;
   if (ev.key === '?') showHelp(help.hidden);
   else if (ev.key === '/') { qInput.focus(); qInput.select(); ev.preventDefault(); }
   else if (ev.key === 'Escape') { if (guideOn) showGuide(false); else if (!help.hidden) showHelp(false); else if (!about.hidden) showAbout(false); else if (query) clearSearch(); else if (shown >= 0) { dismissed = shown; letGo(); } else if (reading.mode === 'playing') setReading('paused'); }
@@ -350,7 +361,7 @@ function setReading(mode) { reading.mode = mode; playBtn.setAttribute('aria-pres
 playBtn.addEventListener('click', () => setReading(reading.mode === 'playing' ? 'paused' : 'playing'));
 stopBtn.addEventListener('click', () => { reading.pos = 0; setReading('paused'); });
 posInput.addEventListener('input', () => { reading.pos = posInput.value / 1000; setReading('paused'); });
-document.addEventListener('keydown', (ev) => { if (!ev.metaKey && !ev.ctrlKey && !ev.altKey && ev.target !== qInput && (ev.key === ' ' || ev.key === 'p')) { setReading(reading.mode === 'playing' ? 'paused' : 'playing'); ev.preventDefault(); } });
+document.addEventListener('keydown', (ev) => { if (!ev.metaKey && !ev.ctrlKey && !ev.altKey && !inControl(ev) && (ev.key === ' ' || ev.key === 'p')) { setReading(reading.mode === 'playing' ? 'paused' : 'playing'); ev.preventDefault(); } });
 
 // The morph: 0 is reading order (each book a band), 1 is meaning (the terrain). It plays on load and on the toggle.
 const order = { value: 1, target: 1, from: 1, t0: 0, seconds: 3, wait: 0 };
@@ -361,7 +372,7 @@ function setOrder(meaning, seconds = 3) {
 function syncOrderButtons() { for (const b of document.querySelectorAll('#order button')) b.setAttribute('aria-pressed', (b.dataset.order === 'meaning') === (order.target === 1)); }
 document.querySelectorAll('#order button').forEach((b) => b.addEventListener('click', () => setOrder(b.dataset.order === 'meaning')));
 document.addEventListener('keydown', (ev) => {
-  if (ev.metaKey || ev.ctrlKey || ev.altKey || ev.target === qInput) return;
+  if (ev.metaKey || ev.ctrlKey || ev.altKey || inControl(ev)) return;
   if (ev.key === 'o') setOrder(order.target !== 1);
 });
 function applyOrder(m) {
