@@ -531,8 +531,8 @@ async function boot() {
   }
   regionLabels.sort((a, b) => b.n - a.n);
   for (const f of regions.fine || []) {
-    const el = document.createElement('div'); el.className = 'fine'; el.innerHTML = `<span class="sym" style="color:${corpus.texts[f.text].colour}">${corpus.texts[f.text].symbol}</span>${esc(f.name)}`;
-    $('labels').appendChild(el); fineLabels.push({ el, u: f.u, v: f.v, r: f.r, n: f.n, w: f.name.length * 7.5 + 18 });
+    const el = document.createElement('div'); el.className = 'fine'; el.textContent = f.name;
+    $('labels').appendChild(el); fineLabels.push({ el, u: f.u, v: f.v, r: f.r, n: f.n, w: f.name.length * 7.5 });
   }
   fineLabels.sort((a, b) => b.n - a.n);
   for (let k = 0; k < 36; k++) { const el = document.createElement('div'); el.className = 'ref'; $('labels').appendChild(el); refLabels.push({ el }); }

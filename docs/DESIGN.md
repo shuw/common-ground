@@ -90,7 +90,7 @@ The flight is a single uniform. The points carry both positions as attributes an
 
 ## Symbols
 
-Each text carries the symbol of its tradition, set in `scripts/build-corpus.py` beside its colour and shown in the legend, the band labels, the card headings, the search results, and across the meaning view (landmarks and verse references carry their text's, each fine cluster its dominant text's, and each region the symbols of the texts that make at least an eighth of it): the Star of David for the Hebrew Bible, the cross for the Gospels, the star and crescent for the Quran, Om for the Gita, the dharma wheel for the Dhammapada, the taijitu for the Tao Te Ching, and the character 儒 for the Analects, since Confucianism has no single emblem in common use and the name of the school is what it uses of itself. All are plain Unicode, so they take the text's colour and need no images.
+Each text carries the symbol of its tradition, set in `scripts/build-corpus.py` beside its colour and shown in the legend, the band labels, the card headings, the search results, and across the meaning view (landmarks and verse references carry their text's, and each region the symbols of the texts that make at least an eighth of it; the fine clusters go without, since with them every zoomed-in label began with one): the Star of David for the Hebrew Bible, the cross for the Gospels, the star and crescent for the Quran, Om for the Gita, the dharma wheel for the Dhammapada, the taijitu for the Tao Te Ching, and the character 儒 for the Analects, since Confucianism has no single emblem in common use and the name of the school is what it uses of itself. All are plain Unicode, so they take the text's colour and need no images.
 
 ## The corpus
 
