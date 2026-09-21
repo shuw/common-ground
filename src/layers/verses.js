@@ -33,7 +33,7 @@ const VERT = /* glsl */`
     // verses just behind it glow, verses read stay lit, verses ahead sit dimmer. uReadOn eases between the two.
     // twinkle: each verse breathes in brightness and size on its own phase, two rates mixed so it never reads as a beat
     float ph = aDelay * 61.0 + aKin * 17.0, tw = (sin(uTime * 1.3 + ph) * 0.6 + sin(uTime * 2.9 + ph * 2.3) * 0.4) * uTwinkle * (1.0 - uReadOn);
-    float twinkle = clamp(1.0 + 0.2 * tw, 0.0, 2.0);
+    float twinkle = clamp(1.0 + 0.2 * tw, 0.0, 3.0);
     float rel = aDelay - uRead, ahead = step(0.0, rel), front = smoothstep(-0.045, 0.0, rel) * (1.0 - ahead);
     float read = mix(1.0, mix(0.6 + 0.4 * front, 0.35, ahead), uReadOn);
     vColor = mix(vColor, vec3(1.0), 0.6 * front * uReadOn);

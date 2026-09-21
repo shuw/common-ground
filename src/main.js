@@ -407,7 +407,9 @@ function frame() {
     if (reading.mode === 'playing') { reading.pos = (reading.pos + dt / reading.seconds) % 1; if (Math.floor(now) !== Math.floor(now - dt)) syncHash(); }
     if (Math.abs(reading.on - want) > 0.001) reading.on += (want - reading.on) * (1 - Math.exp(-dt * 3.5)); else reading.on = want;
     verses.setTime(now); applyReading();
-    verses.setSway(SWAY * (1 - reading.on * Math.min(1, reading.pos / 0.03))); verses.setTwinkle(TWINKLE); // afloat at rest; still once the reading is under way
+    // both effects grow with the camera's distance, so from home a verse's breath and drift are as visible as up close
+    const far = Math.max(0.6, controls.distance / 3);
+    verses.setSway(SWAY * far * (1 - reading.on * Math.min(1, reading.pos / 0.03))); verses.setTwinkle(TWINKLE * Math.min(4, far)); // afloat at rest; still once the reading is under way
   }
   lastFrame = now;
   placeBandLabels(); { const placed = placeRegionLabels(); placeLandmarks(placed); placeFineLabels(placed); placeRefLabels(placed); } placeGuide();
