@@ -169,11 +169,12 @@ canvas.addEventListener('pointermove', (e) => { hover = { x: e.clientX, y: e.cli
 // Click and walk. A click on a verse holds it, so the card stays put. A click on one of its six kin, on the ground
 // or in the card, steps to it: the camera slides over at its current height and the steps make a trail. A click on
 // empty ground lets go.
-const walk = [];
+const walk = []; let lastStepAt = 0;
 function step(i) {
   const last = walk[walk.length - 1], onward = last !== undefined && last !== i && kinOf(last).includes(i);
   if (!onward) walk.length = 0; // a step off the kin is a new walk
   if (last !== i) walk.push(i);
+  if (onward) lastStepAt = performance.now() / 1000;
   hold(i);
   if (onward) { const p = verses.positionOf(i, _p); controls.flyTo(p.x, p.z, controls.goalDistance); }
   syncHash();
@@ -478,7 +479,7 @@ function frame() {
     if (now - last.left < 0.1) threads.show(last.i, kinOf(last.i), textColours, corpus.texts[corpus.verses[last.i][0]].colour, (j, out) => verses.positionOf(j, out), last.left - last.at, now - last.left);
     else { threads.hide(); last.i = -1; }
   } else threads.hide();
-  threads.setTrail(walk, (j, out) => verses.positionOf(j, out));
+  threads.setTrail(walk, (j, out) => verses.positionOf(j, out), 1 - (now - lastStepAt) / 5); // the wake fades over five seconds
   renderer.render(scene, camera);
 }
 

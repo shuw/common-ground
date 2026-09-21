@@ -57,10 +57,11 @@ export class ThreadsLayer {
   }
 
   /** Draw the walk through these verses, in order. */
-  setTrail(indices, positionOf) {
-    const KEEP = 4; // the last few steps only, the older ones fading toward the void so the trail reads as a wake, not litter
+  setTrail(indices, positionOf, fade = 1) {
+    const KEEP = 1; // only the thread just travelled, and it fades away: a wake, not litter
     const steps = indices.slice(-(KEEP + 1));
-    if (steps.length < 2) { this.trail.visible = false; return; }
+    if (steps.length < 2 || fade <= 0) { this.trail.visible = false; return; }
+    this.trailMaterial.opacity = 0.5 * fade;
     if (!this.trailCol) this.trailCol = new Float32Array(this.trailBuf.length);
     let k = 0;
     for (let n = 1; n < steps.length && k + SEG * 6 <= this.trailBuf.length; n++) {
