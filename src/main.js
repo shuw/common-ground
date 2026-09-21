@@ -522,9 +522,7 @@ async function boot() {
   }
   for (const r of regions.regions) {
     if (!r.name) continue;
-    const el = document.createElement('div'); el.className = 'region';
-    const parts = Object.entries(r.share).filter(([, n]) => n / r.n >= 0.12).sort((a, b) => b[1] - a[1]).slice(0, 3);
-    el.innerHTML = `${esc(r.name)}<span class="syms">${parts.map(([t]) => `<span style="color:${corpus.texts[t].colour}">${corpus.texts[t].symbol}</span>`).join('')}</span>`;
+    const el = document.createElement('div'); el.className = 'region'; el.textContent = r.name;
     el.style.fontSize = `${(12 + Math.min(8, r.n / 250)).toFixed(1)}px`;
     el.title = Object.entries(r.share).filter(([, n]) => n).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${corpus.texts[t].name} ${n.toLocaleString()}`).join(' · ');
     $('labels').appendChild(el); regionLabels.push({ el, u: r.u, v: r.v, n: r.n, w: r.name.length * (7 + Math.min(8, r.n / 250) * 0.5) });
