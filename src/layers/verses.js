@@ -35,7 +35,7 @@ const VERT = /* glsl */`
     // verses just behind it glow, verses read stay lit, verses ahead sit dimmer. uReadOn eases between the two.
     // twinkle: each verse breathes in brightness and size on its own phase, two rates mixed so it never reads as a beat
     float ph = aDelay * 61.0 + aKin * 17.0, tw = (sin(uTime * 1.3 + ph) * 0.6 + sin(uTime * 2.9 + ph * 2.3) * 0.4) * uTwinkle; // in the reading too
-    float twinkle = clamp(1.0 + 0.2 * tw, 0.0, 3.0);
+    float twinkle = clamp(1.0 + 0.2 * tw * (1.0 - 0.4 * uReadOn), 0.0, 3.0); // gentler once the reading is under way
     float rel = aDelay - uRead, ahead = step(0.0, rel), front = smoothstep(-0.045, 0.0, rel) * (1.0 - ahead);
     float read = mix(1.0, mix(0.6 + 0.4 * front, 0.35, ahead), uReadOn);
     vColor = mix(vColor, vec3(1.0), 0.6 * front * uReadOn);
@@ -147,6 +147,29 @@ export class VersesLayer {
   /** The reading playhead: a position 0..1 through every text, and how far on it is (0 off, 1 fully on). */
   setRead(pos, on) { if (this.material) { this.material.uniforms.uRead.value = pos; this.material.uniforms.uReadOn.value = on; } }
   setTime(t) { this.time = t; if (this.material) this.material.uniforms.uTime.value = t; }
+
+  /** Every verse's place right now into out (n × 3): the same maths as positionOf, in one pass, with a fast path when the flight is over. */
+  allPositions(out) {
+    const n = this.delays.length, a = this.readingPositions, b = this.meaning, m = this.morph, sway = this.sway, T = this.time, still = this.still, stillT = this.stillT, d = this.delays;
+    if (!this.phase) { this.phase = new Float32Array(n); for (let i = 0; i < n; i++) this.phase[i] = d[i] * 61 + this.kin[i] * 17; }
+    const ph = this.phase, landed = m >= 1;
+    for (let i = 0, o = 0; i < n; i++, o += 3) {
+      let x, y, z, t = 1;
+      if (landed) { x = b[o]; y = b[o + 1]; z = b[o + 2]; }
+      else {
+        const t0 = Math.min(1, Math.max(0, m * 1.35 - d[i] * 0.35)); t = t0 * t0 * (3 - 2 * t0);
+        x = a[o] + (b[o] - a[o]) * t; y = a[o + 1] + (b[o + 1] - a[o + 1]) * t + Math.sin(t * Math.PI) * 0.6; z = a[o + 2] + (b[o + 2] - a[o + 2]) * t;
+      }
+      const sw = sway * t;
+      if (sw > 0) {
+        const sp = ph[i], Ti = i === still ? stillT : T;
+        out[o] = x + (Math.sin(Ti * 0.45 + sp) * 0.7 + Math.sin(Ti * 0.23 + z * 0.9 + sp * 0.3) * 0.5) * 0.02 * sw;
+        out[o + 2] = z + (Math.cos(Ti * 0.38 + sp * 1.3) * 0.7 + Math.sin(Ti * 0.19 + x * 0.8 + sp * 0.2) * 0.5) * 0.02 * sw;
+        out[o + 1] = y + Math.sin(Ti * 0.6 + sp + x * 0.7) * 0.012 * sw;
+      } else { out[o] = x; out[o + 1] = y; out[o + 2] = z; }
+    }
+    return out;
+  }
   setMorph(m) { this.morph = m; if (this.material) this.material.uniforms.uMorph.value = m; }
   setKin(k) { this.threshold = k; if (this.material) this.material.uniforms.uKin.value = k; }
 }

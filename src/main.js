@@ -73,16 +73,30 @@ document.addEventListener('keydown', (ev) => {
 
 // Reading: the nearest verse to the pointer, found by projecting the points (a few tens of thousands: fine on a move, not every frame).
 const _p = new THREE.Vector3();
-let screen = null, screenKey = ''; // every verse's place on screen, refreshed only when the view or the flight moves
+let screen = null, world = null, screenKey = -1, viewSerial = 0, viewChanged = true; // every verse's place on screen, refreshed only when the view, the flight or the drift moves it
+const _vp = new THREE.Matrix4();
+const _lastView = new Float64Array(19);
+function viewMoved() { // compares the camera matrix, the morph and the canvas size to the last frame's, without building a string
+  const e = camera.matrixWorldInverse.elements; let moved = false;
+  for (let i = 0; i < 16; i++) if (_lastView[i] !== e[i]) { _lastView[i] = e[i]; moved = true; }
+  if (_lastView[16] !== order.value) { _lastView[16] = order.value; moved = true; }
+  if (_lastView[17] !== canvas.clientWidth || _lastView[18] !== canvas.clientHeight) { _lastView[17] = canvas.clientWidth; _lastView[18] = canvas.clientHeight; moved = true; }
+  return moved;
+}
 function projectAll() {
   const w = canvas.clientWidth, h = canvas.clientHeight, n = verses.meaning.length / 3;
-  const key = `${camera.matrixWorldInverse.elements.join(',')}|${order.value}|${w}x${h}|${verses.sway > 0 ? verses.time.toFixed(2) : ''}`;
-  if (key === screenKey) return; screenKey = key;
-  if (!screen || screen.length !== n * 3) screen = new Float32Array(n * 3);
-  for (let i = 0; i < n; i++) {
-    verses.positionOf(i, _p).project(camera);
-    screen[i * 3] = (_p.x + 1) / 2 * w; screen[i * 3 + 1] = (1 - _p.y) / 2 * h; screen[i * 3 + 2] = _p.z;
+  const key = viewSerial + (verses.sway > 0 ? Math.floor(verses.time * 8) * 1e-6 : 0); // while drifting, eight times a second is plenty: the drift is slow
+  if (key === screenKey) return false; screenKey = key;
+  if (!screen || screen.length !== n * 3) { screen = new Float32Array(n * 3); world = new Float32Array(n * 3); }
+  verses.allPositions(world);
+  const e = _vp.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse).elements, hw = w / 2, hh = h / 2;
+  for (let o = 0; o < n * 3; o += 3) { // one matrix for view and projection together, applied by hand
+    const x = world[o], y = world[o + 1], z = world[o + 2], iw = 1 / (e[3] * x + e[7] * y + e[11] * z + e[15]);
+    screen[o] = ((e[0] * x + e[4] * y + e[8] * z + e[12]) * iw + 1) * hw;
+    screen[o + 1] = (1 - (e[1] * x + e[5] * y + e[9] * z + e[13]) * iw) * hh;
+    screen[o + 2] = (e[2] * x + e[6] * y + e[10] * z + e[14]) * iw;
   }
+  return true;
 }
 function nearestVerse(sx, sy, px = 8) {
   if (!verses.meaning) return -1;
@@ -213,7 +227,7 @@ async function runSearch(q) {
   query = q; qInput.value = q; clearBtn.hidden = false; const run = ++searchRun; syncHash(); applyReading();
   const words = search.byWords(q);
   renderResults(words.length ? `by the words · ${words.length.toLocaleString()} verses` : 'by the words · nothing yet', bestPerText(words));
-  verses.setHits(words.slice(0, 3000));
+  verses.setHits(words.slice(0, 3000)); labelsDirty = true;
   const progress = { index: 0, model: 0 };
   try {
     const { order } = await search.byMeaning(q, (what, frac) => {
@@ -224,13 +238,13 @@ async function runSearch(q) {
     if (run !== searchRun) return;
     const top = order.slice(0, 80), per = bestPerText(order);
     renderResults('by meaning · the nearest in each text', per);
-    verses.setHits([...new Set([...top, ...per])]);
+    verses.setHits([...new Set([...top, ...per])]); labelsDirty = true;
   } catch (err) {
     console.error(err);
     if (run === searchRun) renderResults(`by the words · ${words.length.toLocaleString()} verses · <b>the model for meaning could not load</b>`, bestPerText(words));
   }
 }
-function clearSearch() { query = ''; searchRun++; if (verses.points) applyReading(); if (document.activeElement !== qInput) qInput.value = ''; results.hidden = true; clearBtn.hidden = true; if (verses.points) verses.setHits(null); syncHash(); }
+function clearSearch() { query = ''; searchRun++; if (verses.points) applyReading(); if (document.activeElement !== qInput) qInput.value = ''; results.hidden = true; clearBtn.hidden = true; if (verses.points) verses.setHits(null); labelsDirty = true; syncHash(); }
 $('search').addEventListener('submit', (e) => { e.preventDefault(); const q = qInput.value.trim(); if (q) runSearch(q); else clearSearch(); qInput.blur(); });
 let typing = 0; // the search runs as you type, a beat after the last key
 qInput.addEventListener('input', () => { clearTimeout(typing); typing = setTimeout(() => { const q = qInput.value.trim(); if (q.length >= 2) { if (q !== query) runSearch(q); } else if (query) clearSearch(); }, 220); });
@@ -327,10 +341,12 @@ function placeFineLabels(placed) {
   }
   return placed;
 }
+let refsKey = -1;
 function placeRefLabels(placed) {
   const w = canvas.clientWidth, h = canvas.clientHeight, near = Math.min(1, Math.max(0, (1.7 - controls.distance) / 0.5)); // only when the camera is close
-  if (!near || !verses.meaning) { for (const r of refLabels) r.el.style.opacity = 0; return; }
+  if (!near || !verses.meaning) { for (const r of refLabels) r.el.style.opacity = 0; refsKey = -1; return; }
   projectAll();
+  if (screenKey === refsKey && !labelsDirty) return; refsKey = screenKey; // the same picture as last time
   const cx = w / 2, cy = h / 2, cands = [];
   for (let i = 0, n = screen.length / 3; i < n; i++) {
     const x = screen[i * 3], y = screen[i * 3 + 1];
@@ -434,7 +450,7 @@ function placeBandLabels() {
   }
 }
 
-let lastFrame = 0;
+let lastFrame = 0, frameNo = 0, labelsDirty = true;
 function frame() {
   requestAnimationFrame(frame);
   controls.update();
@@ -454,7 +470,10 @@ function frame() {
     verses.setStill(shown, shownAt); // the verse in hand holds still where it was taken // afloat at rest; still once the reading is under way
   }
   lastFrame = now;
-  placeBandLabels(); { const placed = placeRegionLabels(); placeLandmarks(placed); placeFineLabels(placed); placeRefLabels(placed); } placeGuide();
+  // the label passes run when the view has moved, and otherwise at twenty a second (the verses drift, and labels follow them)
+  viewChanged = viewMoved(); if (viewChanged) viewSerial++;
+  if (viewChanged || labelsDirty || frameNo % 3 === 0) { placeBandLabels(); { const placed = placeRegionLabels(); placeLandmarks(placed); placeFineLabels(placed); placeRefLabels(placed); } placeGuide(); labelsDirty = false; }
+  frameNo++;
   resetBtn.hidden = controls.goalTarget.lengthSq() < 1e-4 && Math.abs(controls.goalDistance - controls.home.distance) < 1e-3;
   if (hover && corpus && !controls.dragging) {
     const { x, y } = hover; hover = null;
