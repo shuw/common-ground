@@ -121,13 +121,14 @@ function showVerse(i) {
   card.classList.toggle('folded', narrow && shownKin > 0);
   const wasHidden = card.hidden;
   card.hidden = !(help.hidden && about.hidden);
+  if (!held) card.classList.remove('held');
   if (i !== shown) { const fresh = wasHidden || shown < 0; shown = i; shownAt = performance.now() / 1000; card.classList.remove('enter', 'fresh'); void card.offsetWidth; card.classList.add('enter'); if (fresh) card.classList.add('fresh'); syncHash(); }
 }
 let shown = -1, shownAt = 0; // the verse the card and threads are about, and when it arrived
 let last = { i: -1, at: 0, left: 0 }; // the verse whose threads are still receding
 let candidate = { i: -1, since: 0 }; // the verse under the pointer, waiting a moment to be sure
 let dismissed = -1; // a verse let go with Escape stays down until the pointer finds another
-function hold(i) { held = true; showVerse(i); }
+function hold(i) { held = true; showVerse(i); card.classList.add('held'); }
 let focusKin = -1, travelling = null; // the kin card under the pointer; a spark on its way along a thread
 card.addEventListener('pointerover', (e) => { const k = e.target.closest('.k'); focusKin = k ? +k.dataset.k : -1; });
 card.addEventListener('pointerleave', () => { focusKin = -1; });
@@ -146,7 +147,7 @@ card.addEventListener('click', async (e) => {
   if (l) copyLink(l);
 });
 async function copyLink(l) { try { await navigator.clipboard.writeText(location.href); if (l) l.textContent = 'copied'; } catch { if (l) l.textContent = location.href; } }
-function letGo() { held = false; shown = -1; walk.length = 0; card.hidden = true; threads.hide(); syncHash(); }
+function letGo() { held = false; shown = -1; walk.length = 0; card.hidden = true; card.classList.remove('held'); threads.hide(); syncHash(); }
 
 // The URL hash carries the moment: #reading for the order, v=<reference> for the verse in hand.
 function syncHash() {
@@ -463,9 +464,10 @@ function frame() {
   }
   // a verse shows once the pointer has rested on it a moment; letting go waits a little longer, and never while the card is under the pointer or a verse is held
   if (candidate.i !== dismissed) dismissed = -1;
-  if (candidate.i !== shown && !overCard && candidate.i !== dismissed) {
-    if (candidate.i >= 0 && now - candidate.since > 0.04) { held = false; showVerse(candidate.i); }
-    else if (candidate.i < 0 && !held && now - candidate.since > 0.12) letGo();
+  // a held verse stays through any hovering: only a click on another verse, on empty ground, or Escape changes it
+  if (candidate.i !== shown && !overCard && candidate.i !== dismissed && !held) {
+    if (candidate.i >= 0 && now - candidate.since > 0.04) showVerse(candidate.i);
+    else if (candidate.i < 0 && now - candidate.since > 0.12) letGo();
   }
   // the threads recede into the verse the moment the pointer leaves it (the card waits a beat); a held verse keeps them
   if (travelling && shown === travelling.from) {

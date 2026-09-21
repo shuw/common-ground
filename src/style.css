@@ -156,3 +156,6 @@ body.guiding #labels { opacity: 0.12; }
 #card, #about, #help, #results { touch-action: pan-y; }
 #card .k:hover { border-color: var(--c); box-shadow: 0 0 0 1px var(--c) inset, 0 0 14px -4px var(--c); }
 #card .k { transition: border-color 0.12s, box-shadow 0.12s, opacity 0.2s; }
+#card .main { position: relative; }
+#card .main::after { content: "kept · esc to let go"; position: absolute; right: 14px; top: 12px; font-family: var(--mono); font-size: 9.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); opacity: 0; transition: opacity 0.2s; }
+#card.held .main::after { opacity: 1; }
