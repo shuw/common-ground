@@ -121,7 +121,7 @@ function showVerse(i) {
   card.querySelector('.who').innerHTML = `<span class="sym">${esc(info.symbol)}</span>${esc(info.name)} · ${esc(ref)}`;
   card.querySelector('.verse').textContent = text;
   const shared = verses.kin[i], company = shared < 0.15 ? 'keeps its own company' : shared < 0.5 ? 'some shared ground' : shared < 0.85 ? 'shared ground' : 'common ground';
-  card.querySelector('.tr').innerHTML = `${esc(info.translation)} · <span title="How many of this verse's nearest neighbours belong to other texts, against chance">${company} · ${(shared * 100).toFixed(0)}%</span> · <a href="${info.url}" target="_blank" rel="noopener">source ↗</a> · <button class="link" type="button" title="Copy a link to this verse">copy link</button>`;
+  card.querySelector('.tr').innerHTML = `${esc(info.translation)} · <span title="How many of this verse's nearest neighbours belong to other texts, against chance">${company} · ${(shared * 100).toFixed(0)}%</span> · <a href="${info.url.startsWith('https://') ? esc(info.url) : '#'}" target="_blank" rel="noopener">source ↗</a> · <button class="link" type="button" title="Copy a link to this verse">copy link</button>`;
   const prev = i > 0 && corpus.verses[i - 1][0] === t ? i - 1 : -1, next = i + 1 < corpus.verses.length && corpus.verses[i + 1][0] === t ? i + 1 : -1;
   const around = `<div class="around">${prev >= 0 ? `<button data-verse="${prev}">‹ ${esc(corpus.verses[prev][1])}</button>` : '<span></span>'}${next >= 0 ? `<button data-verse="${next}">${esc(corpus.verses[next][1])} ›</button>` : ''}</div>`;
   let n = 0; // each kin card arrives as its thread lands: the n-th thread reaches at 200 ms + 10 ms per step
@@ -547,7 +547,7 @@ async function boot() {
     el.addEventListener('click', () => step(i));
     $('labels').appendChild(el); landmarks.push({ el, i, w: name.length * 6.2 + 30 });
   }
-  about.querySelector('.texts').innerHTML = textIds.map((t) => { const x = corpus.texts[t]; return `<li><i style="color:${x.colour}">${esc(x.symbol)}</i><b>${x.name}</b> · ${esc(x.translation)} · <a href="${x.url}" target="_blank" rel="noopener">${esc(x.source)}</a> · ${x.licence} · ${x.verses.toLocaleString()} verses</li>`; }).join('');
+  about.querySelector('.texts').innerHTML = textIds.map((t) => { const x = corpus.texts[t]; return `<li><i style="color:${esc(x.colour)}">${esc(x.symbol)}</i><b>${esc(x.name)}</b> · ${esc(x.translation)} · <a href="${x.url.startsWith('https://') ? esc(x.url) : '#'}" target="_blank" rel="noopener">${esc(x.source)}</a> · ${esc(x.licence)} · ${x.verses.toLocaleString()} verses</li>`; }).join('');
   setReading('paused');
   const want = readHash(), wanted = want.v ? (refIndex.get(want.v) ?? -1) : -1;
   applyOrder(want.reading ? 0 : 1); order.target = order.value; // the page opens on the terrain; #reading opens on the bands
@@ -562,7 +562,7 @@ async function boot() {
     const off = () => { if (guideOn) showGuide(false); for (const ev of ['pointerdown', 'wheel', 'keydown']) window.removeEventListener(ev, off); };
     setTimeout(() => { for (const ev of ['pointerdown', 'wheel', 'keydown']) window.addEventListener(ev, off); }, 600);
   }
-  $('legend').innerHTML = Object.entries(corpus.texts).map(([k, t]) => `<span><i style="color:${t.colour}">${esc(t.symbol)}</i>${t.name} <b>${t.verses.toLocaleString()}</b></span>`).join('');
+  $('legend').innerHTML = Object.entries(corpus.texts).map(([k, t]) => `<span><i style="color:${esc(t.colour)}">${esc(t.symbol)}</i>${esc(t.name)} <b>${t.verses.toLocaleString()}</b></span>`).join('');
   $('loading').classList.add('gone');
   requestAnimationFrame(frame);
 }
