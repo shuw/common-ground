@@ -449,7 +449,7 @@ function frame() {
     // both effects grow with the camera's distance, so from home a verse's breath and drift are as visible as up close
     const far = Math.max(0.6, controls.distance / 3);
     verses.setSway(SWAY * far); verses.setTwinkle(TWINKLE * Math.min(4, far)); // afloat and breathing, in the reading too
-    verses.setStill(shown, shown >= 0 ? Math.min(1, (now - shownAt) / 0.2) : 0); // the verse in hand settles over 200 ms // afloat at rest; still once the reading is under way
+    verses.setStill(shown, shownAt); // the verse in hand holds still where it was taken // afloat at rest; still once the reading is under way
   }
   lastFrame = now;
   placeBandLabels(); { const placed = placeRegionLabels(); placeLandmarks(placed); placeFineLabels(placed); placeRefLabels(placed); } placeGuide();

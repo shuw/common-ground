@@ -20,11 +20,11 @@ const VERT = /* glsl */`
     vec3 p = mix(position, aMeaning, t);
     p.y += sin(t * 3.14159) * 0.6; // an arc on the way, so the flight reads as flight
     // at rest on the terrain the verses drift as if afloat: two slow waves crossing, each verse on its own phase
-    // the verse in hand comes to rest, easing out of its drift, so it can be clicked
-    float sp = aDelay * 61.0 + aKin * 17.0, sw = uSway * t * (1.0 - uStillT * step(abs(aIndex - uStill), 0.5));
-    p.x += (sin(uTime * 0.45 + sp) * 0.7 + sin(uTime * 0.23 + p.z * 0.9 + sp * 0.3) * 0.5) * 0.02 * sw;
-    p.z += (cos(uTime * 0.38 + sp * 1.3) * 0.7 + sin(uTime * 0.19 + p.x * 0.8 + sp * 0.2) * 0.5) * 0.02 * sw;
-    p.y += sin(uTime * 0.6 + sp + p.x * 0.7) * 0.012 * sw;
+    // the verse in hand freezes where it is: its drift is computed at the moment it was taken, so it does not move at all
+    float sp = aDelay * 61.0 + aKin * 17.0, sw = uSway * t, T = mix(uTime, uStillT, step(abs(aIndex - uStill), 0.5));
+    p.x += (sin(T * 0.45 + sp) * 0.7 + sin(T * 0.23 + p.z * 0.9 + sp * 0.3) * 0.5) * 0.02 * sw;
+    p.z += (cos(T * 0.38 + sp * 1.3) * 0.7 + sin(T * 0.19 + p.x * 0.8 + sp * 0.2) * 0.5) * 0.02 * sw;
+    p.y += sin(T * 0.6 + sp + p.x * 0.7) * 0.012 * sw;
     vec4 mv = modelViewMatrix * vec4(p, 1.0);
     gl_Position = projectionMatrix * mv;
     // in reading order a verse shines by its kinship; below the threshold it all but goes out
@@ -121,9 +121,9 @@ export class VersesLayer {
     const t0 = Math.min(1, Math.max(0, this.morph * 1.35 - this.delays[i] * 0.35)), t = t0 * t0 * (3 - 2 * t0);
     const a = this.readingPositions, b = this.meaning;
     out.set(a[i * 3] + (b[i * 3] - a[i * 3]) * t, a[i * 3 + 1] + (b[i * 3 + 1] - a[i * 3 + 1]) * t + Math.sin(t * Math.PI) * 0.6, a[i * 3 + 2] + (b[i * 3 + 2] - a[i * 3 + 2]) * t);
-    const sw = this.sway * t * (i === this.still ? 1 - this.stillT : 1); // the same drift as the shader, so threads and the hit test stay attached
+    const sw = this.sway * t; // the same drift as the shader, so threads and the hit test stay attached
     if (sw > 0) {
-      const sp = this.delays[i] * 61 + this.kin[i] * 17, T = this.time, px = out.x, pz = out.z;
+      const sp = this.delays[i] * 61 + this.kin[i] * 17, T = i === this.still ? this.stillT : this.time, px = out.x, pz = out.z;
       out.x += (Math.sin(T * 0.45 + sp) * 0.7 + Math.sin(T * 0.23 + pz * 0.9 + sp * 0.3) * 0.5) * 0.02 * sw;
       out.z += (Math.cos(T * 0.38 + sp * 1.3) * 0.7 + Math.sin(T * 0.19 + px * 0.8 + sp * 0.2) * 0.5) * 0.02 * sw;
       out.y += Math.sin(T * 0.6 + sp + px * 0.7) * 0.012 * sw;
@@ -131,7 +131,7 @@ export class VersesLayer {
     return out;
   }
   setSway(v) { this.sway = v; if (this.material) this.material.uniforms.uSway.value = v; }
-  /** Verse i comes to rest (t from 0 to 1 eases its drift out); -1 lets every verse drift. */
+  /** Verse i holds still, at the drift it had at time t; -1 lets every verse drift. */
   setStill(i, t) { this.still = i; this.stillT = t; if (this.material) { this.material.uniforms.uStill.value = i; this.material.uniforms.uStillT.value = t; } }
   setTwinkle(v) { if (this.material) this.material.uniforms.uTwinkle.value = v; }
   /** Whether verse i is lit under the current threshold (a dimmed verse should not catch the pointer). */
