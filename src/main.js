@@ -358,11 +358,17 @@ function applyReading() {
   verses.setRead(reading.pos, reading.on * Math.min(1, reading.pos / 0.03)); // at the very start every verse is lit
   $('reading').classList.toggle('on', reading.pos > 0);
   if (document.activeElement !== posInput) posInput.value = Math.round(reading.pos * 1000);
+  if (reading.mode !== 'playing') stateEl.textContent = reading.pos > 0.0005 ? 'paused' : 'read all seven at once';
   const where = textIds.map((t) => { const x = corpus.texts[t], k = Math.min(x.verses - 1, Math.floor(reading.pos * x.verses)); let s = 0; for (const [name, n] of x.books) { if (k < s + n) return [t, name]; s += n; } return [t, '']; });
   const key = where.map((w) => w[1]).join('|');
   if (key !== whereKey) { whereKey = key; whereEl.innerHTML = where.map(([t, name]) => `<span style="color:${corpus.texts[t].colour}">${esc(name)}</span>`).join(''); }
 }
-function setReading(mode) { reading.mode = mode; playBtn.setAttribute('aria-pressed', mode === 'playing'); applyReading(); if (mode !== 'playing') syncHash(); }
+const stateEl = $('reading').querySelector('.state');
+function setReading(mode) {
+  reading.mode = mode; playBtn.setAttribute('aria-pressed', mode === 'playing');
+  stateEl.textContent = mode === 'playing' ? 'reading' : reading.pos > 0.0005 ? 'paused' : 'read all seven at once'; // the bar says what it is doing
+  applyReading(); if (mode !== 'playing') syncHash();
+}
 playBtn.addEventListener('click', () => setReading(reading.mode === 'playing' ? 'paused' : 'playing'));
 stopBtn.addEventListener('click', () => { reading.pos = 0; setReading('paused'); });
 posInput.addEventListener('input', () => { reading.pos = posInput.value / 1000; setReading('paused'); });
@@ -468,7 +474,7 @@ async function boot() {
   kin = { idx: new Uint16Array(kinBuf, 0, N * 7), sim: new Uint8Array(kinBuf, N * 7 * 2, N * 7) };
   scene.add(threads.group); scene.add(threads.trail); threads.resize(canvas.clientWidth, canvas.clientHeight, pixelRatio);
   scene.add(terrain.build(layout, RELIEF));
-  scene.add(verses.build(corpus, layout, (u, v) => terrain.heightAt(u, v), pixelRatio));
+  scene.add(verses.build(corpus, layout, (u, v) => terrain.heightAt(u, v), pixelRatio)); verses.points.renderOrder = 1; // after the ground
   for (const [k, b] of Object.entries(verses.bands)) { const el = document.createElement('div'); el.className = 'band'; el.textContent = corpus.texts[k].name; el.style.color = corpus.texts[k].colour; $('labels').appendChild(el); bandLabels.push({ el, u: 0.05, v: b.mid }); }
   for (const [k, list] of Object.entries(verses.books)) {
     for (const b of list) { const el = document.createElement('div'); el.className = 'book'; el.textContent = b.name; el.style.color = corpus.texts[k].colour; $('labels').appendChild(el); bookLabels.push({ el, u0: b.u0, u1: b.u1, v: verses.bands[k].mid - verses.bands[k].thick / 2 - 0.004, width: b.name.length * 6.2 }); }
@@ -501,7 +507,7 @@ async function boot() {
     $('labels').appendChild(el); landmarks.push({ el, i, w: name.length * 6.2 + 18 });
   }
   about.querySelector('.texts').innerHTML = textIds.map((t) => { const x = corpus.texts[t]; return `<li><i style="background:${x.colour}"></i><b>${x.name}</b> · ${esc(x.translation)} · <a href="${x.url}" target="_blank" rel="noopener">${esc(x.source)}</a> · ${x.licence} · ${x.verses.toLocaleString()} verses</li>`; }).join('');
-  applyReading();
+  setReading('paused');
   const want = readHash(), wanted = want.v ? (refIndex.get(want.v) ?? -1) : -1;
   applyOrder(want.reading ? 0 : 1); order.target = order.value; // the page opens on the terrain; #reading opens on the bands
   syncOrderButtons();

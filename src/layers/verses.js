@@ -107,7 +107,7 @@ export class VersesLayer {
     geo.setAttribute('aKin', new THREE.BufferAttribute(kin, 1));
     this.hit = new Float32Array(n); geo.setAttribute('aHit', new THREE.BufferAttribute(this.hit, 1));
     geo.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
-    this.material = new THREE.ShaderMaterial({ uniforms: { uPixelRatio: { value: pixelRatio }, uScale: { value: 22 }, uMorph: { value: 1 }, uKin: { value: 0 }, uSearch: { value: 0 }, uRead: { value: 0 }, uReadOn: { value: 0 }, uTime: { value: 0 }, uSway: { value: 0 }, uTwinkle: { value: 1 } }, vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false });
+    this.material = new THREE.ShaderMaterial({ uniforms: { uPixelRatio: { value: pixelRatio }, uScale: { value: 22 }, uMorph: { value: 1 }, uKin: { value: 0 }, uSearch: { value: 0 }, uRead: { value: 0 }, uReadOn: { value: 0 }, uTime: { value: 0 }, uSway: { value: 0 }, uTwinkle: { value: 1 } }, vertexShader: VERT, fragmentShader: FRAG, transparent: true, depthWrite: false, depthTest: false }); // a sprite on a slope would be cut by the ground behind it
     this.points = new THREE.Points(geo, this.material);
     this.points.frustumCulled = false;
     return this.points;
