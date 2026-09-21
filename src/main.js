@@ -91,11 +91,14 @@ function showVerse(i) {
   card.style.setProperty('--c', info.colour);
   card.querySelector('.who').textContent = `${info.name} · ${ref}`;
   card.querySelector('.verse').textContent = text;
-  card.querySelector('.tr').innerHTML = `${esc(info.translation)} · kinship ${(verses.kin[i] * 100).toFixed(0)}% · <a href="${info.url}" target="_blank" rel="noopener">source ↗</a> · <button class="link" type="button" title="Copy a link to this verse">copy link</button>`;
+  const shared = verses.kin[i], company = shared < 0.15 ? 'keeps its own company' : shared < 0.5 ? 'some shared ground' : shared < 0.85 ? 'shared ground' : 'common ground';
+  card.querySelector('.tr').innerHTML = `${esc(info.translation)} · <span title="How much of this verse's neighbourhood belongs to other texts, against chance">${company} · ${(shared * 100).toFixed(0)}%</span> · <a href="${info.url}" target="_blank" rel="noopener">source ↗</a> · <button class="link" type="button" title="Copy a link to this verse">copy link</button>`;
   const prev = i > 0 && corpus.verses[i - 1][0] === t ? i - 1 : -1, next = i + 1 < corpus.verses.length && corpus.verses[i + 1][0] === t ? i + 1 : -1;
   const around = `<div class="around">${prev >= 0 ? `<button data-verse="${prev}">‹ ${esc(corpus.verses[prev][1])}</button>` : '<span></span>'}${next >= 0 ? `<button data-verse="${next}">${esc(corpus.verses[next][1])} ›</button>` : ''}</div>`;
   let n = 0; // each kin card arrives as its thread lands: the n-th thread reaches at 200 ms + 10 ms per step
-  const kins = kinOf(i).map((j, k) => j < 0 ? '' : `<div class="k" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}</b><span>${esc(corpus.verses[j][2])}</span></button></div>`).join('');
+  // how close each kin really is, judged against every nearest-kin pair in the corpus: the top third are close, the bottom third a reach
+  const closeness = (sim) => sim >= 226 ? 'close' : sim <= 221 ? 'far' : '';
+  const kins = kinOf(i).map((j, k) => { if (j < 0) return ''; const c = closeness(kin.sim[i * 7 + k]); return `<div class="k ${c}" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}${c ? `<i>${c}</i>` : ''}</b><span>${esc(corpus.verses[j][2])}</span></button></div>`; }).join('');
   const narrow = isNarrow(); // on a phone the kin wait behind a tap
   card.querySelector('.more').innerHTML = around + (narrow && n ? `<button class="expand" type="button">${n} nearest in other texts <span>▾</span></button>` : '');
   card.querySelector('.kins').innerHTML = kins;
