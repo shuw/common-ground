@@ -389,8 +389,10 @@ document.addEventListener('keydown', (ev) => {
 function applyOrder(m) {
   order.value = m;
   verses.setMorph(m);
-  terrain.mesh.scale.y = Math.max(0.0001, m);
-  terrain.mesh.material.uniforms.uRise.value = m;
+  // the ground goes ahead of the verses: it is flat and dark by the time the flight is a third done, and rises only in the last third of the way back
+  const ground = Math.max(0, Math.min(1, (m - 0.65) / 0.35));
+  terrain.mesh.scale.y = Math.max(0.0001, ground);
+  terrain.mesh.material.uniforms.uRise.value = ground;
 }
 const bandLabels = [], bookLabels = [];
 let labelKey = '';
