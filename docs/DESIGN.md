@@ -48,7 +48,7 @@ A click on a verse holds it: the card stays while the pointer wanders, until the
 
 ## Along the thread
 
-Resting on a kin card brightens its thread and mark and steps the other five back to a third, so the pair under the pointer is the one on the ground. Clicking a kin card does not jump: a spark of light runs the thread from the verse in hand to the kin over 700 ms, the thread lit beneath it and the view riding along with the spark, and only then does the step land and the new verse beam out. The thread's path is one function, used for drawing, for the spark and for the walk trail.
+Resting on a kin card brightens its thread and mark and steps the other five back to a third, so the pair under the pointer is the one on the ground. Clicking a kin card does not jump: a spark of light runs the thread from the verse in hand to the kin over 700 ms, the thread lit beneath it and the view riding along with the spark (blended in from wherever the view was, so there is no jump at the start), and only then does the step land and the new verse beam out. The thread's path is one function, used for drawing, for the spark and for the walk trail.
 
 ## Presence from afar
 
