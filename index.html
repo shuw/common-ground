@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
   <title>Common Ground</title>
-  <meta name="description" content="Seven scriptures, one map: every verse placed by what it says. Where the colours meet, the traditions agree.">
+  <meta name="description" content="Seven scriptures, one map: every verse placed by what it says. Where the colours meet, the traditions say similar things.">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400&display=swap">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
@@ -21,7 +21,7 @@
   <div id="labels"></div>
   <svg id="guide" style="display:none" aria-hidden="true"><rect class="scrim" width="100%" height="100%" /><line class="rule" /><line class="tick a" /><line class="tick b" /><line class="span" /><circle class="dot a" r="3" /><circle class="dot b" r="3" /><line class="lead h" /><line class="lead d" /></svg>
   <div id="guide-labels" hidden>
-    <div class="g intro"><b>How to read it</b>Every verse is a point. Verses that say similar things sit close together.<button class="dismiss" type="button">got it</button></div>
+    <div class="g intro"><b>How to read it</b>Every verse is a point. Verses that say similar things sit close together. Closeness is of wording and subject, not of belief: two verses can sit side by side and disagree.<button class="dismiss" type="button">got it</button></div>
     <div class="g height"><b>height</b>how many verses stand here</div>
     <div class="g span"><b>distance</b>how alike in meaning: far apart, little in common</div>
     <div class="g order"><b>left to right</b>reading order, first verse to last</div>
@@ -34,11 +34,12 @@
   <div id="tools"><button id="reset" hidden title="See the whole ground again">reset view <kbd>0</kbd></button><button id="guide-btn" title="What height, distance and colour mean">how to read it</button><button id="about-btn" title="What this is and how it was made · i">about <kbd>i</kbd></button><button id="help-btn" title="Keyboard shortcuts">keys <kbd>?</kbd></button></div>
   <div id="about" hidden role="dialog" aria-label="About">
     <h2>Common Ground</h2>
-    <p>Seven scriptures, one map: every verse placed by what it says. A language model read each of thirty-four thousand verses and gave it a place, so that verses which say similar things sit close together. That space was flattened to a map, and the map raised into ground whose height is how many verses stand there. Where the colours meet, the traditions agree. Where one colour stands alone, a tradition speaks for itself.</p>
+    <p>Seven scriptures, one map: every verse placed by what it says. A language model read each of thirty-four thousand verses and gave it a place, so that verses which say similar things sit close together. That space was flattened to a map, and the map raised into ground whose height is how many verses stand there. Where the colours meet, the traditions say similar things. Where one colour stands alone, a tradition speaks for itself.</p>
     <h3>What the numbers mean</h3>
     <p><b>Shared ground</b> asks how many of a verse's fifteen nearest neighbours belong to other texts, against what chance would give its own text, so a small text is not called shared just for being small. It describes the verse, not any pair. <b>Nearest in each other text</b> is the closest verse by meaning in each of the six other texts. The bar beside each shows how close the pair is, in fifths set against every such pair in the corpus; the weakest third are left out, so a verse that keeps its own company may list only a few, or none. <b>Search by meaning</b> reads what you type with the same model, in your browser, and scores every verse against it.</p>
     <h3>What to be careful of</h3>
-    <p>These are English translations, so part of the map belongs to the translators. The units differ: a Bible verse, an aya of the Quran, a stanza of the Gita, a chapter of the Analects. The model is small and the layout is one run of one algorithm. Closeness of meaning is not agreement, and a nearest verse is not a matching one. Treat what you find as a place to start reading, not a conclusion.</p>
+    <p>These are English translations, so part of the map belongs to the translators, and for some of these texts the translation is not the scripture. The units differ: a Bible verse, an aya of the Quran, a stanza of the Gita, a chapter of the Analects. The model is small and the layout is one run of one algorithm. Closeness is of wording and subject, not of belief: two verses can sit side by side and disagree, and a nearest verse is not a matching one. Treat what you find as a place to start reading, not a conclusion.</p>
+    <p>The seven texts are a starting set, chosen because open editions exist, not a ranking or a canon; others belong here and may follow. "Hebrew Bible" names the thirty-nine books as the King James Version orders them. The region names are one reader's captions for what each cluster mostly holds. The symbols mark which text a verse comes from and nothing more. If something here is wrong or reads badly, please <a href="https://github.com/shuw/common-ground/issues" target="_blank" rel="noopener">say so</a>.</p>
     <h3>The texts</h3>
     <ul class="texts"></ul>
     <h3>How it works</h3>

@@ -127,7 +127,7 @@ function showVerse(i) {
   let n = 0; // each kin card arrives as its thread lands: the n-th thread reaches at 200 ms + 10 ms per step
   // how close each kin really is, as a level of five: each level is a fifth of all nearest-kin pairs in the corpus (quintiles at cosine 0.86, 0.87, 0.88, 0.90)
   const level = (sim) => sim < 223 ? 1 : sim < 225 ? 2 : sim < 227 ? 3 : sim < 231 ? 4 : 5; // fifths of the pairs that survive the cut
-  const kins = kinOf(i).map((j, k) => [j, k]).filter(([j]) => j >= 0).sort((a, b) => kin.sim[i * 7 + b[1]] - kin.sim[i * 7 + a[1]]).map(([j, k]) => { const sim = kin.sim[i * 7 + k], l = level(sim);  return `<div class="k l${l}" data-k="${k}" data-verse="${j}" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b><span class="sym">${corpus.texts[textIds[k]].symbol}</span>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}<i class="bar" title="How close in meaning: ${l} of 5 (cosine ${(sim / 255).toFixed(2)})"><b style="width:${l * 20}%"></b></i></b><span>${esc(corpus.verses[j][2])}</span></button></div>`; }).join('');
+  const kins = kinOf(i).map((j, k) => [j, k]).filter(([j]) => j >= 0).sort((a, b) => kin.sim[i * 7 + b[1]] - kin.sim[i * 7 + a[1]]).map(([j, k]) => { const sim = kin.sim[i * 7 + k], l = level(sim);  return `<div class="k l${l}" data-k="${k}" data-verse="${j}" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}<i class="bar" title="How close in meaning: ${l} of 5 (cosine ${(sim / 255).toFixed(2)})"><b style="width:${l * 20}%"></b></i></b><span>${esc(corpus.verses[j][2])}</span></button></div>`; }).join('');
   const narrow = isNarrow(); // on a phone the kin wait behind a tap
   const shownKin = (kins.match(/class="k /g) || []).length;
   card.querySelector('.more').innerHTML = around + (narrow && shownKin ? `<button class="expand" type="button">nearest in ${shownKin} other texts <span>▾</span></button>` : '');
@@ -216,7 +216,7 @@ function bestPerText(order, limit = 7) {
 }
 function renderResults(how, ids, extra = '') {
   results.querySelector('.how').innerHTML = how;
-  results.querySelector('ul').innerHTML = ids.map((j) => `<li style="--c:${corpus.texts[corpus.verses[j][0]].colour}"><button data-verse="${j}"><b><span class="sym">${corpus.texts[corpus.verses[j][0]].symbol}</span>${esc(corpus.verses[j][1])}</b><span>${esc(corpus.verses[j][2])}</span></button></li>`).join('') + extra;
+  results.querySelector('ul').innerHTML = ids.map((j) => `<li style="--c:${corpus.texts[corpus.verses[j][0]].colour}"><button data-verse="${j}"><b>${esc(corpus.verses[j][1])}</b><span>${esc(corpus.verses[j][2])}</span></button></li>`).join('') + extra;
   results.hidden = false;
 }
 results.addEventListener('click', (e) => {

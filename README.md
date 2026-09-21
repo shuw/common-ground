@@ -1,6 +1,6 @@
 # Common Ground
 
-Seven scriptures, one map: every verse placed by what it says. Where the colours meet, the traditions agree.
+Seven scriptures, one map: every verse placed by what it says. Where the colours meet, the traditions say similar things.
 
 Live at https://shuw.github.io/common-ground/. See [docs/DESIGN.md](docs/DESIGN.md) for how it is made and what to be careful of.
 
