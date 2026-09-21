@@ -135,7 +135,7 @@ function syncHash() {
   if (h !== location.hash) history.replaceState(null, '', location.pathname + location.search + h);
 }
 const tune = (k, d) => Math.max(0, parseFloat(new URLSearchParams(location.hash.slice(1)).get(k) ?? d)) || 0; // a number in the hash while the right level is found
-const SWAY = tune('sway', '1'), TWINKLE = tune('twinkle', '1'); // how far the verses drift, and how much they breathe, at rest; 0 is still
+const SWAY = tune('sway', '1'), TWINKLE = tune('twinkle', '2'); // how far the verses drift, and how much they breathe, at rest; 0 is still
 function readHash() { const p = new URLSearchParams(location.hash.slice(1)); return { reading: p.has('reading'), v: p.get('v'), q: p.get('q'), w: p.get('w'), t: p.get('t') }; }
 let hover = null, held = false, overCard = false, down = null;
 canvas.addEventListener('pointermove', (e) => { hover = { x: e.clientX, y: e.clientY }; });

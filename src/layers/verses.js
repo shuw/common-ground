@@ -32,7 +32,7 @@ const VERT = /* glsl */`
     // at rest every verse twinkles a little on its own phase; the reading playhead, when it is on, takes over:
     // verses just behind it glow, verses read stay lit, verses ahead sit dimmer. uReadOn eases between the two.
     // twinkle: each verse breathes in brightness and size on its own phase, two rates mixed so it never reads as a beat
-    float ph = aDelay * 61.0 + aKin * 17.0, tw = (sin(uTime * 1.3 + ph) * 0.6 + sin(uTime * 2.9 + ph * 2.3) * 0.4) * uTwinkle * (1.0 - uReadOn);
+    float ph = aDelay * 61.0 + aKin * 17.0, tw = (sin(uTime * 1.3 + ph) * 0.6 + sin(uTime * 2.9 + ph * 2.3) * 0.4) * uTwinkle; // in the reading too
     float twinkle = clamp(1.0 + 0.2 * tw, 0.0, 3.0);
     float rel = aDelay - uRead, ahead = step(0.0, rel), front = smoothstep(-0.045, 0.0, rel) * (1.0 - ahead);
     float read = mix(1.0, mix(0.6 + 0.4 * front, 0.35, ahead), uReadOn);
