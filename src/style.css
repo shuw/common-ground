@@ -147,8 +147,8 @@ body.guiding #labels { opacity: 0.12; }
 @media (max-width: 1000px) and (min-width: 641px) { #search { left: 20px; right: auto; width: min(460px, 60%); transform: none; top: calc(66px + env(safe-area-inset-top, 0px)); } #results { left: 20px; transform: none; top: calc(108px + env(safe-area-inset-top, 0px)); } #title p { display: none; } #card, #help, #about { top: calc(112px + env(safe-area-inset-top, 0px)); } #card { max-height: calc(100vh - 230px - env(safe-area-inset-top, 0px)); } #guide-labels .intro { top: calc(120px + env(safe-area-inset-top, 0px)); } }
 #card .k b i.bar { float: right; width: 36px; height: 3px; margin-top: 5px; border-radius: 2px; background: rgba(255,255,255,0.1); cursor: help; overflow: hidden; }
 #card .k b i.bar b { display: block; height: 100%; margin: 0; border-radius: 2px; background: var(--accent); }
-#card .k.l1, #card .k.l2 { opacity: 0.65; }
-#card .k.l1:hover, #card .k.l2:hover { opacity: 1; }
+#card .k.l1 { opacity: 0.7; }
+#card .k.l1:hover { opacity: 1; }
 #reading, #order, #tools, #legend, #search { touch-action: none; }
 #reading #pos { touch-action: pan-x; }
 #card, #about, #help, #results { touch-action: pan-y; }
