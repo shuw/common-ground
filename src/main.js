@@ -369,7 +369,7 @@ function applyReading() {
   verses.setRead(reading.pos, reading.on * Math.min(1, reading.pos / 0.03)); // at the very start every verse is lit
   $('reading').classList.toggle('on', reading.pos > 0);
   if (document.activeElement !== posInput) posInput.value = Math.round(reading.pos * 1000);
-  if (reading.mode !== 'playing') stateEl.textContent = reading.pos > 0.0005 ? 'paused' : 'read all seven at once';
+  if (reading.mode !== 'playing') stateEl.textContent = reading.pos > 0.0005 ? 'paused' : 'read all at once';
   const where = textIds.map((t) => { const x = corpus.texts[t], k = Math.min(x.verses - 1, Math.floor(reading.pos * x.verses)); let s = 0; for (const [name, n] of x.books) { if (k < s + n) return [t, name]; s += n; } return [t, '']; });
   const key = where.map((w) => w[1]).join('|');
   if (key !== whereKey) { whereKey = key; whereEl.innerHTML = where.map(([t, name]) => `<span style="color:${corpus.texts[t].colour}">${esc(name)}</span>`).join(''); }
@@ -377,7 +377,7 @@ function applyReading() {
 const stateEl = $('reading').querySelector('.state');
 function setReading(mode) {
   reading.mode = mode; playBtn.setAttribute('aria-pressed', mode === 'playing');
-  stateEl.textContent = mode === 'playing' ? 'reading' : reading.pos > 0.0005 ? 'paused' : 'read all seven at once'; // the bar says what it is doing
+  stateEl.textContent = mode === 'playing' ? 'reading' : reading.pos > 0.0005 ? 'paused' : 'read all at once'; // the bar says what it is doing
   applyReading(); if (mode !== 'playing') syncHash();
 }
 playBtn.addEventListener('click', () => setReading(reading.mode === 'playing' ? 'paused' : 'playing'));
