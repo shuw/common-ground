@@ -84,7 +84,7 @@ function nearestVerse(sx, sy, px = 8) {
 const card = $('card');
 const esc = (t) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 /** The nearest verse in each other text, in text order, or -1 for the verse's own text. */
-function kinOf(i) { return textIds.map((t, k) => (t === corpus.verses[i][0] ? -1 : kin.idx[i * 7 + k])); }
+function kinOf(i) { return textIds.map((t, k) => (t === corpus.verses[i][0] || kin.sim[i * 7 + k] < 218 ? -1 : kin.idx[i * 7 + k])); } // a kin at one dot of five is not shown
 function showVerse(i) {
   if (i === shown && !card.hidden) return; // already up: nothing to redraw, nothing to replay
   const [t, ref, text] = corpus.verses[i], info = corpus.texts[t];
@@ -96,13 +96,14 @@ function showVerse(i) {
   const prev = i > 0 && corpus.verses[i - 1][0] === t ? i - 1 : -1, next = i + 1 < corpus.verses.length && corpus.verses[i + 1][0] === t ? i + 1 : -1;
   const around = `<div class="around">${prev >= 0 ? `<button data-verse="${prev}">‹ ${esc(corpus.verses[prev][1])}</button>` : '<span></span>'}${next >= 0 ? `<button data-verse="${next}">${esc(corpus.verses[next][1])} ›</button>` : ''}</div>`;
   let n = 0; // each kin card arrives as its thread lands: the n-th thread reaches at 200 ms + 10 ms per step
-  // how close each kin really is, judged against every nearest-kin pair in the corpus: the top third are close, the bottom third a reach
-  const closeness = (sim) => sim >= 226 ? 'close' : sim <= 221 ? 'far' : '';
-  const kins = kinOf(i).map((j, k) => { if (j < 0) return ''; const c = closeness(kin.sim[i * 7 + k]); return `<div class="k ${c}" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}${c ? `<i>${c}</i>` : ''}</b><span>${esc(corpus.verses[j][2])}</span></button></div>`; }).join('');
+  // how close each kin really is, as a level of five judged against every nearest-kin pair in the corpus (its 5th to 95th percentiles span cosine 0.84 to 0.92)
+  const level = (sim) => Math.max(1, Math.min(5, Math.round(1 + 4 * (sim - 212) / (236 - 212))));
+  const kins = kinOf(i).map((j, k) => [j, k]).filter(([j]) => j >= 0).sort((a, b) => kin.sim[i * 7 + b[1]] - kin.sim[i * 7 + a[1]]).map(([j, k]) => { const sim = kin.sim[i * 7 + k], l = level(sim); if (l < 2) return ''; return `<div class="k l${l}" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}<i title="How close in meaning: ${l} of 5 (cosine ${(sim / 255).toFixed(2)})">${'●'.repeat(l)}${'○'.repeat(5 - l)}</i></b><span>${esc(corpus.verses[j][2])}</span></button></div>`; }).join('');
   const narrow = isNarrow(); // on a phone the kin wait behind a tap
-  card.querySelector('.more').innerHTML = around + (narrow && n ? `<button class="expand" type="button">${n} nearest in other texts <span>▾</span></button>` : '');
+  const shownKin = (kins.match(/class="k /g) || []).length;
+  card.querySelector('.more').innerHTML = around + (narrow && shownKin ? `<button class="expand" type="button">${shownKin} nearest in other texts <span>▾</span></button>` : '');
   card.querySelector('.kins').innerHTML = kins;
-  card.classList.toggle('folded', narrow && n > 0);
+  card.classList.toggle('folded', narrow && shownKin > 0);
   const wasHidden = card.hidden;
   card.hidden = !(help.hidden && about.hidden);
   if (i !== shown) { const fresh = wasHidden || shown < 0; shown = i; shownAt = performance.now() / 1000; card.classList.remove('enter', 'fresh'); void card.offsetWidth; card.classList.add('enter'); if (fresh) card.classList.add('fresh'); syncHash(); }
