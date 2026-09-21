@@ -107,7 +107,7 @@ function showVerse(i) {
   card.querySelector('.who').textContent = `${info.name} · ${ref}`;
   card.querySelector('.verse').textContent = text;
   const shared = verses.kin[i], company = shared < 0.15 ? 'keeps its own company' : shared < 0.5 ? 'some shared ground' : shared < 0.85 ? 'shared ground' : 'common ground';
-  card.querySelector('.tr').innerHTML = `${esc(info.translation)} · <span title="How much of this verse's neighbourhood belongs to other texts, against chance">${company} · ${(shared * 100).toFixed(0)}%</span> · <a href="${info.url}" target="_blank" rel="noopener">source ↗</a> · <button class="link" type="button" title="Copy a link to this verse">copy link</button>`;
+  card.querySelector('.tr').innerHTML = `${esc(info.translation)} · <span title="How many of this verse's nearest neighbours belong to other texts, against chance">${company} · ${(shared * 100).toFixed(0)}%</span> · <a href="${info.url}" target="_blank" rel="noopener">source ↗</a> · <button class="link" type="button" title="Copy a link to this verse">copy link</button>`;
   const prev = i > 0 && corpus.verses[i - 1][0] === t ? i - 1 : -1, next = i + 1 < corpus.verses.length && corpus.verses[i + 1][0] === t ? i + 1 : -1;
   const around = `<div class="around">${prev >= 0 ? `<button data-verse="${prev}">‹ ${esc(corpus.verses[prev][1])}</button>` : '<span></span>'}${next >= 0 ? `<button data-verse="${next}">${esc(corpus.verses[next][1])} ›</button>` : ''}</div>`;
   let n = 0; // each kin card arrives as its thread lands: the n-th thread reaches at 200 ms + 10 ms per step
@@ -116,7 +116,7 @@ function showVerse(i) {
   const kins = kinOf(i).map((j, k) => [j, k]).filter(([j]) => j >= 0).sort((a, b) => kin.sim[i * 7 + b[1]] - kin.sim[i * 7 + a[1]]).map(([j, k]) => { const sim = kin.sim[i * 7 + k], l = level(sim); if (l < 2) return ''; return `<div class="k l${l}" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}<i title="How close in meaning: ${l} of 5 (cosine ${(sim / 255).toFixed(2)})">${'●'.repeat(l)}${'○'.repeat(5 - l)}</i></b><span>${esc(corpus.verses[j][2])}</span></button></div>`; }).join('');
   const narrow = isNarrow(); // on a phone the kin wait behind a tap
   const shownKin = (kins.match(/class="k /g) || []).length;
-  card.querySelector('.more').innerHTML = around + (narrow && shownKin ? `<button class="expand" type="button">${shownKin} nearest in other texts <span>▾</span></button>` : '');
+  card.querySelector('.more').innerHTML = around + (narrow && shownKin ? `<button class="expand" type="button">nearest in ${shownKin} other texts <span>▾</span></button>` : '');
   card.querySelector('.kins').innerHTML = kins;
   card.classList.toggle('folded', narrow && shownKin > 0);
   const wasHidden = card.hidden;
@@ -199,22 +199,22 @@ results.addEventListener('click', (e) => {
 async function runSearch(q) {
   query = q; qInput.value = q; clearBtn.hidden = false; const run = ++searchRun; syncHash(); applyReading();
   const words = search.byWords(q);
-  renderResults(words.length ? `by words · ${words.length.toLocaleString()} verses` : 'by words · nothing', bestPerText(words));
+  renderResults(words.length ? `by the words · ${words.length.toLocaleString()} verses` : 'by the words · nothing yet', bestPerText(words));
   verses.setHits(words.slice(0, 3000));
   const progress = { index: 0, model: 0 };
   try {
     const { order } = await search.byMeaning(q, (what, frac) => {
       progress[what] = frac; if (run !== searchRun) return;
       const pct = Math.round(((progress.index + progress.model) / 2) * 100);
-      renderResults(`by words · ${words.length.toLocaleString()} verses · <b>loading the meaning model, ${pct}%</b>`, bestPerText(words), `<li class="bar" style="border:0;padding:0"><i style="width:${pct}%"></i></li>`);
+      renderResults(`by the words · ${words.length.toLocaleString()} verses · <b>fetching the model for meaning, ${pct}%</b>`, bestPerText(words), `<li class="bar" style="border:0;padding:0"><i style="width:${pct}%"></i></li>`);
     });
     if (run !== searchRun) return;
     const top = order.slice(0, 80), per = bestPerText(order);
-    renderResults('by meaning · nearest in each text', per);
+    renderResults('by meaning · the nearest in each text', per);
     verses.setHits([...new Set([...top, ...per])]);
   } catch (err) {
     console.error(err);
-    if (run === searchRun) renderResults(`by words · ${words.length.toLocaleString()} verses · <b>the meaning model could not load</b>`, bestPerText(words));
+    if (run === searchRun) renderResults(`by the words · ${words.length.toLocaleString()} verses · <b>the model for meaning could not load</b>`, bestPerText(words));
   }
 }
 function clearSearch() { query = ''; searchRun++; if (verses.points) applyReading(); if (document.activeElement !== qInput) qInput.value = ''; results.hidden = true; clearBtn.hidden = true; if (verses.points) verses.setHits(null); syncHash(); }
@@ -519,5 +519,5 @@ async function boot() {
   $('loading').classList.add('gone');
   requestAnimationFrame(frame);
 }
-boot().catch((err) => { $('loading').textContent = 'The corpus failed to load. Refresh to try again.'; console.error(err); });
+boot().catch((err) => { $('loading').textContent = 'The texts did not arrive. Refresh to try again.'; console.error(err); });
 window.__cg = { scene, camera, controls, terrain, verses, threads, order, setOrder, hold, letGo, step, walk, reading, setReading, applyReading, showGuide, runSearch, clearSearch, get search() { return search; }, get kin() { return kin; }, freeze: (m) => { order.target = m; applyOrder(m); syncOrderButtons(); }, get corpus() { return corpus; }, get layout() { return layout; } };

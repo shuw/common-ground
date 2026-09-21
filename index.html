@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
   <title>Common Ground</title>
-  <meta name="description" content="Every verse of seven founding texts, placed by what it means. Where the colours pile up, the traditions say the same thing.">
+  <meta name="description" content="Seven scriptures, one map: every verse placed by what it says. Where the colours meet, the traditions agree.">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Source+Sans+3:wght@400;600&family=IBM+Plex+Mono:wght@400&display=swap">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
@@ -16,29 +16,29 @@
   <canvas id="scene"></canvas>
   <div id="title">
     <h1><img class="mark" src="/favicon.svg" alt="" width="28" height="28">Common Ground</h1>
-    <p>Every verse of seven founding texts, placed by what it means.</p>
+    <p>Seven scriptures, one map: every verse placed by what it says.</p>
   </div>
   <div id="labels"></div>
   <svg id="guide" style="display:none" aria-hidden="true"><rect class="scrim" width="100%" height="100%" /><line class="rule" /><line class="tick a" /><line class="tick b" /><line class="span" /><circle class="dot a" r="3" /><circle class="dot b" r="3" /><line class="lead h" /><line class="lead d" /></svg>
   <div id="guide-labels" hidden>
-    <div class="g intro"><b>How to read it</b>Every verse is a point. Where it sits is what it means; near verses say near things.<button class="dismiss" type="button">got it</button></div>
+    <div class="g intro"><b>How to read it</b>Every verse is a point. Verses that say similar things sit close together.<button class="dismiss" type="button">got it</button></div>
     <div class="g height"><b>height</b>how many verses stand here</div>
-    <div class="g span"><b>distance</b>how alike in meaning: far apart is little in common</div>
+    <div class="g span"><b>distance</b>how alike in meaning: far apart, little in common</div>
     <div class="g order"><b>left to right</b>reading order, first verse to last</div>
-    <div class="g bright"><b>brightness</b>shared ground: how much a verse's neighbours come from other texts</div>
+    <div class="g bright"><b>brightness</b>shared ground: how many of a verse's neighbours come from other texts</div>
     <div class="g colour"><b>colour</b>which text</div>
   </div>
-  <form id="search" role="search"><input id="q" type="search" placeholder="search by meaning: love your enemies, the wind, a father's mercy…" autocomplete="off" spellcheck="false"><kbd class="hint">/</kbd><button type="button" id="clear" hidden aria-label="Clear search">×</button></form>
+  <form id="search" role="search"><input id="q" type="search" placeholder="search by meaning · love your enemies, the wind, a father's mercy" autocomplete="off" spellcheck="false"><kbd class="hint">/</kbd><button type="button" id="clear" hidden aria-label="Clear search">×</button></form>
   <div id="results" hidden><div class="how"></div><ul></ul></div>
-  <nav id="order" aria-label="Order"><button data-order="meaning" aria-pressed="true" title="Every verse placed by its meaning">by meaning <kbd>o</kbd></button><button data-order="reading" aria-pressed="false" title="Each book in reading order">reading order <kbd>o</kbd></button></nav>
-  <div id="tools"><button id="reset" hidden title="Back to the whole ground">reset view <kbd>0</kbd></button><button id="guide-btn" title="What the height, the distances and the colours mean">how to read it</button><button id="about-btn" title="What this is and how it was made · i">about <kbd>i</kbd></button><button id="help-btn" title="Keyboard shortcuts">keys <kbd>?</kbd></button></div>
+  <nav id="order" aria-label="Order"><button data-order="meaning" aria-pressed="true" title="Every verse where its meaning puts it">by meaning <kbd>o</kbd></button><button data-order="reading" aria-pressed="false" title="Each text as a line, first verse to last">reading order <kbd>o</kbd></button></nav>
+  <div id="tools"><button id="reset" hidden title="See the whole ground again">reset view <kbd>0</kbd></button><button id="guide-btn" title="What height, distance and colour mean">how to read it</button><button id="about-btn" title="What this is and how it was made · i">about <kbd>i</kbd></button><button id="help-btn" title="Keyboard shortcuts">keys <kbd>?</kbd></button></div>
   <div id="about" hidden role="dialog" aria-label="About">
     <h2>Common Ground</h2>
-    <p>Every verse of seven founding texts, placed by what it means. Each verse was read by one multilingual language model and turned into a point in a space where nearby points say similar things; that space was flattened to a map, and the map drawn as ground whose height is how many verses stand there. Where the colours pile up, the traditions say the same thing. A region of one colour is a tradition's own.</p>
+    <p>Seven scriptures, one map: every verse placed by what it says. A language model read each verse and gave it a place, so that verses which say similar things sit close together. That space was flattened to a map, and the map raised into ground whose height is how many verses stand there. Where the colours meet, the traditions agree. Where one colour stands alone, a tradition speaks for itself.</p>
     <h3>What the numbers mean</h3>
-    <p><b>Shared ground</b> is the share of a verse's fifteen nearest neighbours that come from other texts, divided by the share a shuffle would give its text, so a small text is not counted as shared just for being small; it is a property of the verse, not of any pair. <b>Nearest in each other text</b> is the closest verse by meaning in each of the six other texts, however far that is: the dots beside each show how close the pair is on a scale of five, set against every nearest-kin pair in the corpus, and a kin so far that it would score one dot is left out, so a verse that keeps its own company may list only a few. <b>Search by meaning</b> embeds what you type with the same model, in your browser, and scores every verse against it; the model is fetched once and nothing you type leaves the page.</p>
+    <p><b>Shared ground</b> asks how many of a verse's fifteen nearest neighbours belong to other texts, against what chance would give its own text, so a small text is not called shared just for being small. It describes the verse, not any pair. <b>Nearest in each other text</b> is the closest verse by meaning in each of the six other texts, however far away. The dots show how close the pair is, on a scale of five set against every such pair in the corpus; the farthest fifth are left out, so a verse that keeps its own company may list only a few. <b>Search by meaning</b> reads what you type with the same model, in your browser, and scores every verse against it. The model is fetched once, and nothing you type leaves the page.</p>
     <h3>What to be careful of</h3>
-    <p>These are English translations, so part of the geometry belongs to the translators. The unit of text differs: a Bible verse, a Quranic aya, a stanza of the Gita, a chapter of the Analects. The model is small and the map is one run of a layout algorithm; closeness of meaning is not agreement, and a neighbour is the nearest verse, not a matching one. Treat what you find as a place to start reading, not a conclusion.</p>
+    <p>These are English translations, so part of the map belongs to the translators. The units differ: a Bible verse, an aya of the Quran, a stanza of the Gita, a chapter of the Analects. The model is small and the layout is one run of one algorithm. Closeness of meaning is not agreement, and a nearest verse is not a matching one. Treat what you find as a place to start reading, not a conclusion.</p>
     <h3>The texts</h3>
     <ul class="texts"></ul>
     <p class="made">Embeddings by <a href="https://huggingface.co/intfloat/multilingual-e5-small" target="_blank" rel="noopener">multilingual-e5-small</a>, layout by <a href="https://umap-learn.readthedocs.io/" target="_blank" rel="noopener">UMAP</a>, drawn with <a href="https://threejs.org/" target="_blank" rel="noopener">three.js</a>, search in the browser with <a href="https://huggingface.co/docs/transformers.js" target="_blank" rel="noopener">transformers.js</a>.</p>
@@ -50,13 +50,13 @@
       <dt><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd></dt><dd>slide the ground</dd>
       <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>zoom in, zoom out</dd>
       <dt><kbd>0</kbd></dt><dd>reset the view</dd>
-      <dt><kbd>o</kbd></dt><dd>flip between meaning and reading order</dd>
+      <dt><kbd>o</kbd></dt><dd>switch between meaning and reading order</dd>
     </dl>
     <h3>Read</h3>
     <dl>
       <dt><kbd>/</kbd></dt><dd>search</dd>
-      <dt><kbd>,</kbd> <kbd>.</kbd></dt><dd>previous, next verse of the one in hand</dd>
-      <dt><kbd>c</kbd></dt><dd>copy a link to the verse in hand</dd>
+      <dt><kbd>,</kbd> <kbd>.</kbd></dt><dd>the verse before, the verse after</dd>
+      <dt><kbd>c</kbd></dt><dd>copy a link to this verse</dd>
       <dt><kbd>space</kbd></dt><dd>play or pause the reading</dd>
       <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>step the reading back, forward</dd>
     </dl>
@@ -64,14 +64,14 @@
     <dl>
       <dt><kbd>i</kbd></dt><dd>about</dd>
       <dt><kbd>?</kbd></dt><dd>this list</dd>
-      <dt><kbd>esc</kbd></dt><dd>let go: a search, a panel, the verse in hand, a playing reading</dd>
+      <dt><kbd>esc</kbd></dt><dd>let go of whatever is open</dd>
     </dl>
-    <p>Drag to slide the ground, scroll or pinch to zoom toward the pointer. Rest on a verse to read it and its nearest kin; click it to keep the card. Click one of its kin to walk on, and the walk leaves a trail. Click empty ground to let go.</p>
+    <p>Drag to slide the ground; scroll or pinch to zoom toward the pointer. Rest on a verse to read it and its nearest kin; click to keep it. Click a kin to walk on, and the walk leaves a trail. Click empty ground to let go.</p>
   </div>
-  <div id="reading"><button id="play" type="button" title="Play or pause the reading · space" aria-pressed="false"><svg class="on" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.5" y="1" width="2.5" height="8" rx="0.6"/><rect x="6" y="1" width="2.5" height="8" rx="0.6"/></svg><svg class="off" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 1.2 L8.8 5 L2.5 8.8 Z"/></svg></button><input id="pos" type="range" min="0" max="1000" step="1" value="0" title="How far into every text at once"><button id="stop" type="button" title="Back to the start, everything lit" aria-label="Back to the start">×</button><div class="where"></div></div>
+  <div id="reading"><button id="play" type="button" title="Play or pause the reading · space" aria-pressed="false"><svg class="on" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.5" y="1" width="2.5" height="8" rx="0.6"/><rect x="6" y="1" width="2.5" height="8" rx="0.6"/></svg><svg class="off" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 1.2 L8.8 5 L2.5 8.8 Z"/></svg></button><input id="pos" type="range" min="0" max="1000" step="1" value="0" title="How far into every text, read together"><button id="stop" type="button" title="Back to the start, every verse lit" aria-label="Back to the start">×</button><div class="where"></div></div>
   <div id="legend"></div>
   <div id="card" hidden><div class="main"><div class="who"></div><p class="verse"></p><div class="tr"></div><div class="more"></div></div><div class="kins"></div></div>
-  <div id="loading">Common Ground, loading…</div>
+  <div id="loading">Gathering seven scriptures…</div>
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 # Common Ground
 
-Every verse of seven founding texts, placed by what it means. Where the colours pile up, the traditions say the same thing.
+Seven scriptures, one map: every verse placed by what it says. Where the colours meet, the traditions agree.
 
 Live at https://shuw.github.io/common-ground/. See [docs/DESIGN.md](docs/DESIGN.md) for how it is made and what to be careful of.
 
