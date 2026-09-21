@@ -136,8 +136,8 @@ card.addEventListener('click', async (e) => {
   if (k && shown >= 0 && !travelling) { // the light travels the thread first, then the step lands
     const j = +k.dataset.verse, col = +k.dataset.k;
     const from = shown; held = true;
-    travelling = { from, j: col, to: j, t0: performance.now() / 1000, seconds: 0.45 };
-    setTimeout(() => { travelling = null; step(j); }, 450);
+    travelling = { from, j: col, to: j, t0: performance.now() / 1000, seconds: 0.7 };
+    setTimeout(() => { travelling = null; step(j); }, 700);
     return;
   }
   const b = e.target.closest('[data-verse]'); if (b) return step(+b.dataset.verse);
@@ -470,6 +470,7 @@ function frame() {
   if (travelling && shown === travelling.from) {
     const e = Math.min(1, (now - travelling.t0) / travelling.seconds), ease = e < 0.5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2;
     threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt, 0, travelling.j, { j: travelling.j, e: ease });
+    if (threads.travelAt) controls.flyTo(threads.travelAt.x, threads.travelAt.z, controls.goalDistance); // the view rides along with the spark
   } else if (shown >= 0 && kin && (held || overCard || candidate.i === shown)) { last = { i: shown, at: shownAt, left: 0 }; threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt, 0, overCard ? focusKin : -1); }
   else if (last.i >= 0 && kin) {
     if (!last.left) last.left = now;

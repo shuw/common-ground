@@ -51,23 +51,27 @@ export class ThreadsLayer {
     this.buf = new Float32Array(MAX * SEG * 2 * 3); this.cbuf = new Float32Array(MAX * SEG * 2 * 3);
     // the walk: a dim gold line through the verses stepped so far, drawn apart from the threads so it stays when they change
     this.trailGeo = new LineSegmentsGeometry();
-    this.trailMaterial = new LineMaterial({ color: 0xd7b46a, linewidth: 1.2, transparent: true, opacity: 0.45, depthWrite: false, depthTest: false });
+    this.trailMaterial = new LineMaterial({ vertexColors: true, linewidth: 1.2, transparent: true, opacity: 0.5, depthWrite: false, depthTest: false });
     this.trail = new LineSegments2(this.trailGeo, this.trailMaterial); this.trail.frustumCulled = false; this.trail.visible = false; this.trail.renderOrder = 2;
     this.trailBuf = new Float32Array(64 * SEG * 2 * 3);
   }
 
   /** Draw the walk through these verses, in order. */
   setTrail(indices, positionOf) {
-    if (indices.length < 2) { this.trail.visible = false; return; }
+    const KEEP = 4; // the last few steps only, the older ones fading toward the void so the trail reads as a wake, not litter
+    const steps = indices.slice(-(KEEP + 1));
+    if (steps.length < 2) { this.trail.visible = false; return; }
+    if (!this.trailCol) this.trailCol = new Float32Array(this.trailBuf.length);
     let k = 0;
-    for (let n = 1; n < indices.length && k + SEG * 6 <= this.trailBuf.length; n++) {
-      positionOf(indices[n - 1], this.a); positionOf(indices[n], this.b);
-      const lift = Math.min(0.25, 0.03 + this.a.distanceTo(this.b) * 0.04);
+    for (let n = 1; n < steps.length && k + SEG * 6 <= this.trailBuf.length; n++) {
+      positionOf(steps[n - 1], this.a); positionOf(steps[n], this.b);
+      const lift = Math.min(0.25, 0.03 + this.a.distanceTo(this.b) * 0.04), age = (steps.length - 1 - n) / KEEP, g = 0.15 + 0.85 * (1 - age);
       for (let s = 0; s < SEG; s++) for (const e of [s / SEG, (s + 1) / SEG]) {
-        this.trailBuf[k] = this.a.x + (this.b.x - this.a.x) * e; this.trailBuf[k + 1] = this.a.y + (this.b.y - this.a.y) * e + Math.sin(e * Math.PI) * lift; this.trailBuf[k + 2] = this.a.z + (this.b.z - this.a.z) * e; k += 3;
+        this.trailBuf[k] = this.a.x + (this.b.x - this.a.x) * e; this.trailBuf[k + 1] = this.a.y + (this.b.y - this.a.y) * e + Math.sin(e * Math.PI) * lift; this.trailBuf[k + 2] = this.a.z + (this.b.z - this.a.z) * e;
+        this.trailCol[k] = 0.84 * g; this.trailCol[k + 1] = 0.71 * g; this.trailCol[k + 2] = 0.42 * g; k += 3;
       }
     }
-    this.trailGeo.setPositions(this.trailBuf.subarray(0, k)); this.trailGeo._maxInstanceCount = undefined; this.trail.visible = true;
+    this.trailGeo.setPositions(this.trailBuf.subarray(0, k)); this.trailGeo.setColors(this.trailCol.subarray(0, k)); this.trailGeo._maxInstanceCount = undefined; this.trail.visible = true;
   }
 
   /** The camera's distance, as a factor from 1 up close to about 1.8 at home: marks, rings and lines keep their presence from afar. */
