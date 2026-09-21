@@ -38,6 +38,15 @@ export class ThreadsLayer {
       fragmentShader: `uniform float uT; uniform vec3 uColor; void main() { float d = length(gl_PointCoord - 0.5) * 2.0; float ring = smoothstep(0.6, 0.8, d) * (1.0 - smoothstep(0.92, 1.0, d)); gl_FragColor = vec4(uColor, ring * (1.0 - uT)); }`,
     });
     this.pulse = new THREE.Points(pg, this.pulseMaterial); this.pulse.frustumCulled = false; this.pulse.renderOrder = 5; this.group.add(this.pulse);
+    // the spark that travels a thread when a kin is chosen
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3)); sg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
+    this.sparkMaterial = new THREE.ShaderMaterial({
+      uniforms: { uColor: { value: new THREE.Color() }, uPixelRatio: { value: 1 } }, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
+      vertexShader: `uniform float uPixelRatio; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = max(18.0, 90.0 * uPixelRatio / -mv.z); }`,
+      fragmentShader: `uniform vec3 uColor; void main() { float d = length(gl_PointCoord - 0.5) * 2.0; if (d > 1.0) discard; float core = 1.0 - smoothstep(0.0, 0.25, d); float glow = pow(1.0 - d, 2.0) * 0.7; gl_FragColor = vec4(mix(uColor, vec3(1.0), core), core + glow); }`,
+    });
+    this.spark = new THREE.Points(sg, this.sparkMaterial); this.spark.frustumCulled = false; this.spark.visible = false; this.spark.renderOrder = 6; this.group.add(this.spark);
+    this.travelPoint = new THREE.Vector3(); this.travelAt = null;
     this.a = new THREE.Vector3(); this.b = new THREE.Vector3(); this.c = new THREE.Color();
     this.buf = new Float32Array(MAX * SEG * 2 * 3); this.cbuf = new Float32Array(MAX * SEG * 2 * 3);
     // the walk: a dim gold line through the verses stepped so far, drawn apart from the threads so it stays when they change
@@ -61,21 +70,34 @@ export class ThreadsLayer {
     this.trailGeo.setPositions(this.trailBuf.subarray(0, k)); this.trailGeo._maxInstanceCount = undefined; this.trail.visible = true;
   }
 
-  resize(w, h, pixelRatio) { for (const m of [this.core, this.halo, this.trailMaterial]) m.resolution.set(w, h); this.markMaterial.uniforms.uPixelRatio.value = pixelRatio; this.pulseMaterial.uniforms.uPixelRatio.value = pixelRatio; }
+  resize(w, h, pixelRatio) { for (const m of [this.core, this.halo, this.trailMaterial]) m.resolution.set(w, h); this.markMaterial.uniforms.uPixelRatio.value = pixelRatio; this.pulseMaterial.uniforms.uPixelRatio.value = pixelRatio; this.sparkMaterial.uniforms.uPixelRatio.value = pixelRatio; }
 
   /** Draw arcs from verse i to each verse in kin (skipping -1), positions from positionOf, colours per kin;
    *  t is the seconds since the verse was picked: the arcs grow out of it, one a little after the other. */
-  show(i, kin, colours, colour, positionOf, t, recede = 0) {
+  /** The path of the thread from a to b, at fraction e along it; n is the thread's index among its siblings. */
+  along(a, b, e, n, out) {
+    const dist = a.distanceTo(b), lift = Math.min(0.3, 0.04 + dist * 0.05);
+    const dx = b.x - a.x, dz = b.z - a.z, len = Math.hypot(dx, dz) || 1, side = (n - 3.5) * Math.min(dist, 3) * 0.05, bow = Math.sin(e * Math.PI);
+    return out.set(a.x + dx * e + (-dz / len * side) * bow, a.y + (b.y - a.y) * e + bow * lift, a.z + dz * e + (dx / len * side) * bow);
+  }
+
+  show(i, kin, colours, colour, positionOf, t, recede = 0, focus = -1, travel = null) {
     const progress = Math.min(1, t / 0.26) * (1 - Math.min(1, recede / 0.1)), mp = this.marks.geometry.getAttribute('position'), mc = this.marks.geometry.getAttribute('color'), mb = this.marks.geometry.getAttribute('aBig');
     positionOf(i, this.a); this.c.set(colour);
     mp.setXYZ(0, this.a.x, this.a.y + 0.01, this.a.z); mc.setXYZ(0, this.c.r, this.c.g, this.c.b); mb.setX(0, 1);
     let k = 0, n = 0, m = 1;
+    this.travelAt = null;
     for (let j = 0; j < kin.length; j++) {
       if (kin[j] < 0) continue;
       const tp = Math.min(1, Math.max(0, progress * 1.3 - (n++) * 0.05)), reach = 1 - Math.pow(1 - tp, 3);
       positionOf(kin[j], this.b); this.c.set(colours[j]);
-      if (reach >= 0.999) { mp.setXYZ(m, this.b.x, this.b.y + 0.01, this.b.z); mc.setXYZ(m, this.c.r, this.c.g, this.c.b); mb.setX(m, 0); m++; }
+      // a hovered thread stands out; the others step back. A travelling light lifts the whole of its thread.
+      const dimmed = focus >= 0 && j !== focus, lit = j === focus || (travel && travel.j === j);
+      const shade = dimmed ? 0.3 : 1, boost = lit ? 1.35 : 1;
+      if (reach >= 0.999) { mp.setXYZ(m, this.b.x, this.b.y + 0.01, this.b.z); mc.setXYZ(m, this.c.r * shade * boost, this.c.g * shade * boost, this.c.b * shade * boost); mb.setX(m, lit ? 1 : 0); m++; }
+      if (travel && travel.j === j) this.along(this.a, this.b, travel.e, n - 1, this.travelPoint); if (travel && travel.j === j) this.travelAt = this.travelPoint;
       if (reach <= 0) continue;
+      this.c.multiplyScalar(shade * boost);
       const dist = this.a.distanceTo(this.b), lift = Math.min(0.3, 0.04 + dist * 0.05); // low arcs, so six threads fan out instead of rising as one
       // kin that lie the same way would run as one thread: each bows a little to its own side
       const dx = this.b.x - this.a.x, dz = this.b.z - this.a.z, len = Math.hypot(dx, dz) || 1, side = (n - 3.5) * Math.min(dist, 3) * 0.05, px = -dz / len * side, pz = dx / len * side;
@@ -97,6 +119,9 @@ export class ThreadsLayer {
     const pt = t / 0.3;
     if (pt < 1) { this.pulse.geometry.getAttribute('position').setXYZ(0, this.a.x, this.a.y + 0.01, this.a.z); this.pulse.geometry.getAttribute('position').needsUpdate = true; this.pulseMaterial.uniforms.uT.value = pt; this.pulseMaterial.uniforms.uColor.value.set(colour); }
     this.pulse.visible = pt < 1;
+    // the travelling light: a bright spark that runs along one thread
+    if (this.travelAt) { const sp = this.spark.geometry.getAttribute('position'); sp.setXYZ(0, this.travelAt.x, this.travelAt.y + 0.012, this.travelAt.z); sp.needsUpdate = true; this.sparkMaterial.uniforms.uColor.value.set(colours[travel.j]); this.spark.visible = true; }
+    else this.spark.visible = false;
     this.group.visible = true;
   }
   hide() { this.group.visible = false; }

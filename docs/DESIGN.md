@@ -46,6 +46,10 @@ Every verse's place on screen is projected once per view (the cache is keyed on 
 
 A click on a verse holds it: the card stays while the pointer wanders, until the pointer rests on another verse or empty ground is clicked. A click on one of its six kin, on the ground or in the card, steps to it: the camera slides over at its current height and the steps make a trail drawn as a dim gold line; a click on a verse that is not a kin of the last step starts a new walk. The walk rides in the hash (`w=<ref>|<ref>…`, the last 24 steps; references hold dots and commas but never a bar) so it can be shared, and a shared link opens with its last verse held. A dive on click, the camera coming down to the verse, was built and taken out again: the card should stay put without the view moving.
 
+## Along the thread
+
+Resting on a kin card brightens its thread and mark and steps the other five back to a third, so the pair under the pointer is the one on the ground. Clicking a kin card does not jump: a spark of light runs the thread from the verse in hand to the kin over 450 ms, the thread lit beneath it, and only then does the step land and the new verse beam out. The thread's path is one function, used for drawing, for the spark and for the walk trail.
+
 ## Permalinks
 
 The URL hash carries the moment and nothing else: `reading` for the order, `v=<reference>` for the verse in hand (the page opens with it held and its threads drawn, the view left alone, so a refresh changes nothing), `q=<query>` for a search, `t=<percent>` for where the reading stands (a link opens paused there; while playing the hash follows once a second).

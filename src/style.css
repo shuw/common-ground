@@ -152,3 +152,5 @@ body.guiding #labels { opacity: 0.12; }
 #reading, #order, #tools, #legend, #search { touch-action: none; }
 #reading #pos { touch-action: pan-x; }
 #card, #about, #help, #results { touch-action: pan-y; }
+#card .k:hover { border-color: var(--c); box-shadow: 0 0 0 1px var(--c) inset, 0 0 14px -4px var(--c); }
+#card .k { transition: border-color 0.12s, box-shadow 0.12s, opacity 0.2s; }

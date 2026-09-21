@@ -113,7 +113,7 @@ function showVerse(i) {
   let n = 0; // each kin card arrives as its thread lands: the n-th thread reaches at 200 ms + 10 ms per step
   // how close each kin really is, as a level of five: each level is a fifth of all nearest-kin pairs in the corpus (quintiles at cosine 0.86, 0.87, 0.88, 0.90)
   const level = (sim) => sim < 223 ? 1 : sim < 225 ? 2 : sim < 227 ? 3 : sim < 231 ? 4 : 5; // fifths of the pairs that survive the cut
-  const kins = kinOf(i).map((j, k) => [j, k]).filter(([j]) => j >= 0).sort((a, b) => kin.sim[i * 7 + b[1]] - kin.sim[i * 7 + a[1]]).map(([j, k]) => { const sim = kin.sim[i * 7 + k], l = level(sim);  return `<div class="k l${l}" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}<i class="bar" title="How close in meaning: ${l} of 5 (cosine ${(sim / 255).toFixed(2)})"><b style="width:${l * 20}%"></b></i></b><span>${esc(corpus.verses[j][2])}</span></button></div>`; }).join('');
+  const kins = kinOf(i).map((j, k) => [j, k]).filter(([j]) => j >= 0).sort((a, b) => kin.sim[i * 7 + b[1]] - kin.sim[i * 7 + a[1]]).map(([j, k]) => { const sim = kin.sim[i * 7 + k], l = level(sim);  return `<div class="k l${l}" data-k="${k}" data-verse="${j}" style="--c:${corpus.texts[textIds[k]].colour}; --n:${n++}"><button data-verse="${j}"><b>${corpus.texts[textIds[k]].name.includes(corpus.verses[j][1].split(' ')[0]) ? '' : esc(corpus.texts[textIds[k]].name) + ' · '}${esc(corpus.verses[j][1])}<i class="bar" title="How close in meaning: ${l} of 5 (cosine ${(sim / 255).toFixed(2)})"><b style="width:${l * 20}%"></b></i></b><span>${esc(corpus.verses[j][2])}</span></button></div>`; }).join('');
   const narrow = isNarrow(); // on a phone the kin wait behind a tap
   const shownKin = (kins.match(/class="k /g) || []).length;
   card.querySelector('.more').innerHTML = around + (narrow && shownKin ? `<button class="expand" type="button">nearest in ${shownKin} other texts <span>▾</span></button>` : '');
@@ -128,7 +128,18 @@ let last = { i: -1, at: 0, left: 0 }; // the verse whose threads are still reced
 let candidate = { i: -1, since: 0 }; // the verse under the pointer, waiting a moment to be sure
 let dismissed = -1; // a verse let go with Escape stays down until the pointer finds another
 function hold(i) { held = true; showVerse(i); }
+let focusKin = -1, travelling = null; // the kin card under the pointer; a spark on its way along a thread
+card.addEventListener('pointerover', (e) => { const k = e.target.closest('.k'); focusKin = k ? +k.dataset.k : -1; });
+card.addEventListener('pointerleave', () => { focusKin = -1; });
 card.addEventListener('click', async (e) => {
+  const k = e.target.closest('.k[data-verse]');
+  if (k && shown >= 0 && !travelling) { // the light travels the thread first, then the step lands
+    const j = +k.dataset.verse, col = +k.dataset.k;
+    const from = shown; held = true;
+    travelling = { from, j: col, to: j, t0: performance.now() / 1000, seconds: 0.45 };
+    setTimeout(() => { travelling = null; step(j); }, 450);
+    return;
+  }
   const b = e.target.closest('[data-verse]'); if (b) return step(+b.dataset.verse);
   if (e.target.closest('.expand')) { card.classList.toggle('folded'); return; }
   const l = e.target.closest('.link');
@@ -455,7 +466,10 @@ function frame() {
     else if (candidate.i < 0 && !held && now - candidate.since > 0.12) letGo();
   }
   // the threads recede into the verse the moment the pointer leaves it (the card waits a beat); a held verse keeps them
-  if (shown >= 0 && kin && (held || overCard || candidate.i === shown)) { last = { i: shown, at: shownAt, left: 0 }; threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt); }
+  if (travelling && shown === travelling.from) {
+    const e = Math.min(1, (now - travelling.t0) / travelling.seconds), ease = e < 0.5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2;
+    threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt, 0, travelling.j, { j: travelling.j, e: ease });
+  } else if (shown >= 0 && kin && (held || overCard || candidate.i === shown)) { last = { i: shown, at: shownAt, left: 0 }; threads.show(shown, kinOf(shown), textColours, corpus.texts[corpus.verses[shown][0]].colour, (j, out) => verses.positionOf(j, out), now - shownAt, 0, overCard ? focusKin : -1); }
   else if (last.i >= 0 && kin) {
     if (!last.left) last.left = now;
     if (now - last.left < 0.1) threads.show(last.i, kinOf(last.i), textColours, corpus.texts[corpus.verses[last.i][0]].colour, (j, out) => verses.positionOf(j, out), last.left - last.at, now - last.left);
