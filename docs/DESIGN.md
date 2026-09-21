@@ -50,6 +50,10 @@ A click on a verse holds it: the card stays while the pointer wanders, until the
 
 Resting on a kin card brightens its thread and mark and steps the other five back to a third, so the pair under the pointer is the one on the ground. Clicking a kin card does not jump: a spark of light runs the thread from the verse in hand to the kin over 450 ms, the thread lit beneath it, and only then does the step land and the new verse beam out. The thread's path is one function, used for drawing, for the spark and for the walk trail.
 
+## Presence from afar
+
+The marks, the ring, the spark and the thread widths have floors in pixels, and the floors grow with the camera's distance, from their close-up size to about 1.8 times it at home, so a hovered verse and its threads are as easy to see from the whole ground as from up close without becoming loud up close.
+
 ## Permalinks
 
 The URL hash carries the moment and nothing else: `reading` for the order, `v=<reference>` for the verse in hand (the page opens with it held and its threads drawn, the view left alone, so a refresh changes nothing), `q=<query>` for a search, `t=<percent>` for where the reading stands (a link opens paused there; while playing the hash follows once a second).

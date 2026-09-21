@@ -21,10 +21,10 @@ export class ThreadsLayer {
     mg.setAttribute('aBig', new THREE.BufferAttribute(new Float32Array(MAX + 1), 1));
     mg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
     this.markMaterial = new THREE.ShaderMaterial({
-      uniforms: { uPixelRatio: { value: 1 }, uT: { value: 1 }, uOpacity: { value: 1 } }, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
-      vertexShader: `attribute float aBig; uniform float uPixelRatio, uT; varying vec3 vColor; varying float vBig;
+      uniforms: { uPixelRatio: { value: 1 }, uT: { value: 1 }, uOpacity: { value: 1 }, uFar: { value: 1 } }, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
+      vertexShader: `attribute float aBig; uniform float uPixelRatio, uT, uFar; varying vec3 vColor; varying float vBig;
         void main() { vColor = color; vBig = aBig; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv;
-          float swell = 1.0 + 0.5 * (1.0 - uT) * aBig; gl_PointSize = max(9.0 + 5.0 * aBig, (34.0 + 22.0 * aBig) * swell * uPixelRatio / -mv.z); }`,
+          float swell = 1.0 + 0.5 * (1.0 - uT) * aBig; gl_PointSize = max((9.0 + 5.0 * aBig) * uFar * uPixelRatio, (34.0 + 22.0 * aBig) * swell * uPixelRatio / -mv.z); }`,
       fragmentShader: `uniform float uOpacity; varying vec3 vColor; varying float vBig;
         void main() { float d = length(gl_PointCoord - 0.5) * 2.0; if (d > 1.0) discard; float core = 1.0 - smoothstep(0.0, 0.35, d); float glow = pow(1.0 - d, 2.2) * 0.55;
           gl_FragColor = vec4(mix(vColor, vec3(1.0), core * 0.7), (core + glow) * (0.8 + 0.2 * vBig) * uOpacity); }`,
@@ -33,16 +33,16 @@ export class ThreadsLayer {
     // a ring that spreads from the verse and fades, the moment it is picked
     const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3)); pg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
     this.pulseMaterial = new THREE.ShaderMaterial({
-      uniforms: { uT: { value: 1 }, uColor: { value: new THREE.Color() }, uPixelRatio: { value: 1 } }, transparent: true, depthWrite: false, depthTest: false,
-      vertexShader: `uniform float uT, uPixelRatio; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = max(16.0, 26.0 * (1.0 + 8.0 * uT) * uPixelRatio / -mv.z); }`,
+      uniforms: { uT: { value: 1 }, uColor: { value: new THREE.Color() }, uPixelRatio: { value: 1 }, uFar: { value: 1 } }, transparent: true, depthWrite: false, depthTest: false,
+      vertexShader: `uniform float uT, uPixelRatio, uFar; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = max(16.0 * uFar * (1.0 + 2.0 * uT) * uPixelRatio, 26.0 * (1.0 + 8.0 * uT) * uPixelRatio / -mv.z); }`,
       fragmentShader: `uniform float uT; uniform vec3 uColor; void main() { float d = length(gl_PointCoord - 0.5) * 2.0; float ring = smoothstep(0.6, 0.8, d) * (1.0 - smoothstep(0.92, 1.0, d)); gl_FragColor = vec4(uColor, ring * (1.0 - uT)); }`,
     });
     this.pulse = new THREE.Points(pg, this.pulseMaterial); this.pulse.frustumCulled = false; this.pulse.renderOrder = 5; this.group.add(this.pulse);
     // the spark that travels a thread when a kin is chosen
     const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(new Float32Array(3), 3)); sg.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 20);
     this.sparkMaterial = new THREE.ShaderMaterial({
-      uniforms: { uColor: { value: new THREE.Color() }, uPixelRatio: { value: 1 } }, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
-      vertexShader: `uniform float uPixelRatio; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = max(18.0, 90.0 * uPixelRatio / -mv.z); }`,
+      uniforms: { uColor: { value: new THREE.Color() }, uPixelRatio: { value: 1 }, uFar: { value: 1 } }, transparent: true, depthWrite: false, depthTest: false, blending: THREE.AdditiveBlending,
+      vertexShader: `uniform float uPixelRatio, uFar; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mv; gl_PointSize = max(18.0 * uFar * uPixelRatio, 90.0 * uPixelRatio / -mv.z); }`,
       fragmentShader: `uniform vec3 uColor; void main() { float d = length(gl_PointCoord - 0.5) * 2.0; if (d > 1.0) discard; float core = 1.0 - smoothstep(0.0, 0.25, d); float glow = pow(1.0 - d, 2.0) * 0.7; gl_FragColor = vec4(mix(uColor, vec3(1.0), core), core + glow); }`,
     });
     this.spark = new THREE.Points(sg, this.sparkMaterial); this.spark.frustumCulled = false; this.spark.visible = false; this.spark.renderOrder = 6; this.group.add(this.spark);
@@ -70,6 +70,8 @@ export class ThreadsLayer {
     this.trailGeo.setPositions(this.trailBuf.subarray(0, k)); this.trailGeo._maxInstanceCount = undefined; this.trail.visible = true;
   }
 
+  /** The camera's distance, as a factor from 1 up close to about 1.8 at home: marks, rings and lines keep their presence from afar. */
+  setFar(far) { const f = Math.min(1.8, Math.max(1, 0.7 + far * 0.25)); for (const m of [this.markMaterial, this.pulseMaterial, this.sparkMaterial]) m.uniforms.uFar.value = f; this.core.linewidth = 1.3 * f; this.halo.linewidth = 4 * f; this.trailMaterial.linewidth = 1.2 * f; }
   resize(w, h, pixelRatio) { for (const m of [this.core, this.halo, this.trailMaterial]) m.resolution.set(w, h); this.markMaterial.uniforms.uPixelRatio.value = pixelRatio; this.pulseMaterial.uniforms.uPixelRatio.value = pixelRatio; this.sparkMaterial.uniforms.uPixelRatio.value = pixelRatio; }
 
   /** Draw arcs from verse i to each verse in kin (skipping -1), positions from positionOf, colours per kin;
