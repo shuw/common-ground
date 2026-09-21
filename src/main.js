@@ -47,7 +47,7 @@ for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEv
 // a slider or button that was just used lets go of focus, so the arrow keys and space go back to the map
 for (const el of document.querySelectorAll('input[type=range], button')) el.addEventListener('pointerup', () => setTimeout(() => el.blur(), 0));
 
-// Keys: arrows slide the ground, + and - zoom, z resets the view; o flips the order; space plays and pauses the reading.
+// Keys: arrows slide the ground, + and - zoom, 0 resets the view; o flips the order; space plays and pauses the reading; , and . step verses; [ and ] scrub the reading; i about; c copy link.
 const resetBtn = $('reset');
 resetBtn.addEventListener('click', () => controls.goHome());
 const help = $('help'), helpBtn = $('help-btn');
@@ -59,12 +59,16 @@ document.addEventListener('keydown', (ev) => {
   if (ev.key === '?') showHelp(help.hidden);
   else if (ev.key === '/') { qInput.focus(); qInput.select(); ev.preventDefault(); }
   else if (ev.key === 'Escape') { if (guideOn) showGuide(false); else if (!help.hidden) showHelp(false); else if (!about.hidden) showAbout(false); else if (query) clearSearch(); else if (shown >= 0) { dismissed = shown; letGo(); } else if (reading.mode === 'playing') setReading('paused'); }
-  const cx = canvas.clientWidth / 2, cy = canvas.clientHeight / 2, step = controls.goalDistance * 0.12;
-  const pan = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[ev.key];
+  const cx = canvas.clientWidth / 2, cy = canvas.clientHeight / 2, stride = controls.goalDistance * 0.12;
+  const pan = { ArrowLeft: [-stride, 0], ArrowRight: [stride, 0], ArrowUp: [0, -stride], ArrowDown: [0, stride] }[ev.key];
   if (pan) { controls.panBy(...pan); ev.preventDefault(); }
   else if (ev.key === '+' || ev.key === '=') controls.zoomAt(0.7, cx, cy);
   else if (ev.key === '-' || ev.key === '_') controls.zoomAt(1 / 0.7, cx, cy);
-  else if (ev.key === 'z') controls.goHome();
+  else if (ev.key === '0' || ev.key === 'z') controls.goHome(); // 0 as every browser's reset zoom; z stays for hands used to it
+  else if (ev.key === 'i') showAbout(about.hidden);
+  else if (ev.key === 'c' && shown >= 0) copyLink(card.querySelector('.tr .link'));
+  else if ((ev.key === ',' || ev.key === '.') && shown >= 0) { const j = shown + (ev.key === '.' ? 1 : -1); if (j >= 0 && j < corpus.verses.length && corpus.verses[j][0] === corpus.verses[shown][0]) step(j); }
+  else if (ev.key === '[' || ev.key === ']') { reading.pos = Math.min(0.999, Math.max(0, reading.pos + (ev.key === ']' ? 0.01 : -0.01))); setReading('paused'); }
 });
 
 // Reading: the nearest verse to the pointer, found by projecting the points (a few tens of thousands: fine on a move, not every frame).
@@ -128,8 +132,9 @@ card.addEventListener('click', async (e) => {
   const b = e.target.closest('[data-verse]'); if (b) return step(+b.dataset.verse);
   if (e.target.closest('.expand')) { card.classList.toggle('folded'); return; }
   const l = e.target.closest('.link');
-  if (l) { try { await navigator.clipboard.writeText(location.href); l.textContent = 'copied'; } catch { l.textContent = location.href; } }
+  if (l) copyLink(l);
 });
+async function copyLink(l) { try { await navigator.clipboard.writeText(location.href); if (l) l.textContent = 'copied'; } catch { if (l) l.textContent = location.href; } }
 function letGo() { held = false; shown = -1; walk.length = 0; card.hidden = true; threads.hide(); syncHash(); }
 
 // The URL hash carries the moment: #reading for the order, v=<reference> for the verse in hand.
@@ -424,7 +429,7 @@ function frame() {
     verses.setTime(now); applyReading();
     // both effects grow with the camera's distance, so from home a verse's breath and drift are as visible as up close
     const far = Math.max(0.6, controls.distance / 3);
-    verses.setSway(SWAY * far * (1 - reading.on * Math.min(1, reading.pos / 0.03))); verses.setTwinkle(TWINKLE * Math.min(4, far)); // afloat at rest; still once the reading is under way
+    verses.setSway(SWAY * far); verses.setTwinkle(TWINKLE * Math.min(4, far)); // afloat and breathing, in the reading too // afloat at rest; still once the reading is under way
   }
   lastFrame = now;
   placeBandLabels(); { const placed = placeRegionLabels(); placeLandmarks(placed); placeFineLabels(placed); placeRefLabels(placed); } placeGuide();

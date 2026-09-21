@@ -31,7 +31,7 @@
   <form id="search" role="search"><input id="q" type="search" placeholder="search by meaning: love your enemies, the wind, a father's mercy…" autocomplete="off" spellcheck="false"><kbd class="hint">/</kbd><button type="button" id="clear" hidden aria-label="Clear search">×</button></form>
   <div id="results" hidden><div class="how"></div><ul></ul></div>
   <nav id="order" aria-label="Order"><button data-order="meaning" aria-pressed="true" title="Every verse placed by its meaning">by meaning <kbd>o</kbd></button><button data-order="reading" aria-pressed="false" title="Each book in reading order">reading order <kbd>o</kbd></button></nav>
-  <div id="tools"><button id="reset" hidden title="Back to the whole ground">reset view <kbd>z</kbd></button><button id="guide-btn" title="What the height, the distances and the colours mean">how to read it</button><button id="about-btn" title="What this is and how it was made">about</button><button id="help-btn" title="Keyboard shortcuts">keys <kbd>?</kbd></button></div>
+  <div id="tools"><button id="reset" hidden title="Back to the whole ground">reset view <kbd>0</kbd></button><button id="guide-btn" title="What the height, the distances and the colours mean">how to read it</button><button id="about-btn" title="What this is and how it was made · i">about <kbd>i</kbd></button><button id="help-btn" title="Keyboard shortcuts">keys <kbd>?</kbd></button></div>
   <div id="about" hidden role="dialog" aria-label="About">
     <h2>Common Ground</h2>
     <p>Every verse of seven founding texts, placed by what it means. Each verse was read by one multilingual language model and turned into a point in a space where nearby points say similar things; that space was flattened to a map, and the map drawn as ground whose height is how many verses stand there. Where the colours pile up, the traditions say the same thing. A region of one colour is a tradition's own.</p>
@@ -45,15 +45,26 @@
   </div>
   <div id="help" hidden role="dialog" aria-label="Keyboard shortcuts">
     <h2>Keys</h2>
+    <h3>Move</h3>
     <dl>
-      <dt><kbd>o</kbd></dt><dd>flip between meaning and reading order</dd>
-      <dt><kbd>space</kbd></dt><dd>play or pause the reading</dd>
       <dt><kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd></dt><dd>slide the ground</dd>
       <dt><kbd>+</kbd> <kbd>−</kbd></dt><dd>zoom in, zoom out</dd>
-      <dt><kbd>z</kbd></dt><dd>reset the view</dd>
+      <dt><kbd>0</kbd></dt><dd>reset the view</dd>
+      <dt><kbd>o</kbd></dt><dd>flip between meaning and reading order</dd>
+    </dl>
+    <h3>Read</h3>
+    <dl>
       <dt><kbd>/</kbd></dt><dd>search</dd>
-      <dt><kbd>esc</kbd></dt><dd>let go: a search, a panel, the verse in hand, a playing reading</dd>
+      <dt><kbd>,</kbd> <kbd>.</kbd></dt><dd>previous, next verse of the one in hand</dd>
+      <dt><kbd>c</kbd></dt><dd>copy a link to the verse in hand</dd>
+      <dt><kbd>space</kbd></dt><dd>play or pause the reading</dd>
+      <dt><kbd>[</kbd> <kbd>]</kbd></dt><dd>step the reading back, forward</dd>
+    </dl>
+    <h3>Panels</h3>
+    <dl>
+      <dt><kbd>i</kbd></dt><dd>about</dd>
       <dt><kbd>?</kbd></dt><dd>this list</dd>
+      <dt><kbd>esc</kbd></dt><dd>let go: a search, a panel, the verse in hand, a playing reading</dd>
     </dl>
     <p>Drag to slide the ground, scroll or pinch to zoom toward the pointer. Rest on a verse to read it and its nearest kin; click it to keep the card. Click one of its kin to walk on, and the walk leaves a trail. Click empty ground to let go.</p>
   </div>

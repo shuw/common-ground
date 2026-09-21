@@ -52,7 +52,7 @@ The URL hash carries the moment and nothing else: `reading` for the order, `v=<r
 
 ## Afloat
 
-At the start of the reading, where every verse is lit, the verses drift on the terrain as if afloat: two slow waves crossing, each verse on its own phase, up to about two hundredths of the ground's width. The drift is computed the same way on the CPU so threads and the hit test stay attached, and the screen cache refreshes every hundredth of a second while it runs. It fades out over the first few percent of the reading, since a rolling window over drifting points would blur. Both effects grow with the camera's distance (a verse at home is a pixel, so a change that reads up close vanishes from afar). Every verse also breathes a little in brightness and size, two rates mixed so it never reads as a beat. The twinkle stays through the reading. `sway=<n>` and `twinkle=<n>` in the hash set the two strengths (0 still; the defaults are 1 and 2) while the right levels are found.
+At the start of the reading, where every verse is lit, the verses drift on the terrain as if afloat: two slow waves crossing, each verse on its own phase, up to about two hundredths of the ground's width. The drift is computed the same way on the CPU so threads and the hit test stay attached, and the screen cache refreshes every hundredth of a second while it runs. It stays through the reading. Both effects grow with the camera's distance (a verse at home is a pixel, so a change that reads up close vanishes from afar). Every verse also breathes a little in brightness and size, two rates mixed so it never reads as a beat. The twinkle stays through the reading. `sway=<n>` and `twinkle=<n>` in the hash set the two strengths (0 still; the defaults are 1 and 2) while the right levels are found.
 
 ## The reading playhead
 
@@ -61,6 +61,10 @@ One position runs through every text at once, by fraction, a full reading in thr
 ## Fat lines and the instance count
 
 The threads and the walk trail are `LineSegments2` fat lines. The renderer remembers, the first time it binds a geometry, how many instances its buffers held and never raises that number; a thread set that grew from two arcs on its first frame to six was therefore drawn at two for the rest of its life, which looked like a single ray. After every change of segments the layer forgets that memory (`geometry._maxInstanceCount = undefined`).
+
+## Keys
+
+The keys follow the conventions of maps, players and readers wherever one exists: `/` search, `?` help, Escape dismisses, arrows pan, `+` and `−` zoom, `0` resets the view (every browser's Cmd+0; `z` is kept as a silent alias), space plays and pauses (with `p` as a silent alias), `,` and `.` step frames in players and here step verses, `[` and `]` scrub, `i` opens about, `c` copies a link. `o` flips the order, which has no convention; it is the first letter. A focused control keeps its own keys. The help panel groups them as Move, Read and Panels.
 
 ## Nothing zooms but the map
 
