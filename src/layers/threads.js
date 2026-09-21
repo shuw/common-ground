@@ -46,7 +46,7 @@ export class ThreadsLayer {
       fragmentShader: `uniform vec3 uColor; void main() { float d = length(gl_PointCoord - 0.5) * 2.0; if (d > 1.0) discard; float core = 1.0 - smoothstep(0.0, 0.25, d); float glow = pow(1.0 - d, 2.0) * 0.7; gl_FragColor = vec4(mix(uColor, vec3(1.0), core), core + glow); }`,
     });
     this.spark = new THREE.Points(sg, this.sparkMaterial); this.spark.frustumCulled = false; this.spark.visible = false; this.spark.renderOrder = 6; this.group.add(this.spark);
-    this.travelPoint = new THREE.Vector3(); this.travelAt = null;
+    this.travelPoint = new THREE.Vector3(); this.travelAt = null; this.p = new THREE.Vector3();
     this.a = new THREE.Vector3(); this.b = new THREE.Vector3(); this.c = new THREE.Color();
     this.buf = new Float32Array(MAX * SEG * 2 * 3); this.cbuf = new Float32Array(MAX * SEG * 2 * 3);
     // the walk: a dim gold line through the verses stepped so far, drawn apart from the threads so it stays when they change
@@ -101,16 +101,13 @@ export class ThreadsLayer {
       const dimmed = focus >= 0 && j !== focus, lit = j === focus || (travel && travel.j === j);
       const shade = dimmed ? 0.3 : 1, boost = lit ? 1.35 : 1;
       if (reach >= 0.999) { mp.setXYZ(m, this.b.x, this.b.y + 0.01, this.b.z); mc.setXYZ(m, this.c.r * shade * boost, this.c.g * shade * boost, this.c.b * shade * boost); mb.setX(m, lit ? 1 : 0); m++; }
-      if (travel && travel.j === j) this.along(this.a, this.b, travel.e, n - 1, this.travelPoint); if (travel && travel.j === j) this.travelAt = this.travelPoint;
+      if (travel && travel.j === j) { this.along(this.a, this.b, travel.e, n, this.travelPoint); this.travelAt = this.travelPoint; } // n as the thread below uses it
       if (reach <= 0) continue;
       this.c.multiplyScalar(shade * boost);
-      const dist = this.a.distanceTo(this.b), lift = Math.min(0.3, 0.04 + dist * 0.05); // low arcs, so six threads fan out instead of rising as one
-      // kin that lie the same way would run as one thread: each bows a little to its own side
-      const dx = this.b.x - this.a.x, dz = this.b.z - this.a.z, len = Math.hypot(dx, dz) || 1, side = (n - 3.5) * Math.min(dist, 3) * 0.05, px = -dz / len * side, pz = dx / len * side;
       for (let s = 0; s < SEG; s++) {
         for (const e of [s / SEG * reach, (s + 1) / SEG * reach]) {
-          const bow = Math.sin(e * Math.PI);
-          this.buf[k] = this.a.x + dx * e + px * bow; this.buf[k + 1] = this.a.y + (this.b.y - this.a.y) * e + bow * lift; this.buf[k + 2] = this.a.z + dz * e + pz * bow;
+          this.along(this.a, this.b, e, n, this.p); // one path for the thread, the spark and the trail
+          this.buf[k] = this.p.x; this.buf[k + 1] = this.p.y; this.buf[k + 2] = this.p.z;
           this.cbuf[k] = this.c.r; this.cbuf[k + 1] = this.c.g; this.cbuf[k + 2] = this.c.b; k += 3;
         }
       }
