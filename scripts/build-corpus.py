@@ -5,13 +5,13 @@ import json, re, os
 
 RAW = 'raw'
 texts = {
-  'torah':    {'name': 'Hebrew Bible', 'lang': 'English', 'translation': 'King James Version, 1611', 'source': 'Project Gutenberg #10', 'licence': 'public domain', 'colour': '#6f7fd0', 'url': 'https://www.gutenberg.org/ebooks/10'},
-  'gospels':  {'name': 'Gospels', 'lang': 'English', 'translation': 'King James Version, 1611', 'source': 'Project Gutenberg #10', 'licence': 'public domain', 'colour': '#b85c7a', 'url': 'https://www.gutenberg.org/ebooks/10'},
-  'quran':    {'name': 'Quran', 'lang': 'English', 'translation': 'Pickthall, 1930', 'source': 'Tanzil.net', 'licence': 'free with attribution', 'colour': '#3fa7a0', 'url': 'https://tanzil.net/trans/en.pickthall'},
-  'gita':     {'name': 'Bhagavad Gita', 'lang': 'English', 'translation': 'Arnold, The Song Celestial, 1885', 'source': 'Project Gutenberg #2388', 'licence': 'public domain', 'colour': '#e0993a', 'url': 'https://www.gutenberg.org/ebooks/2388'},
-  'dhamma':   {'name': 'Dhammapada', 'lang': 'English', 'translation': 'Müller, 1881', 'source': 'Project Gutenberg #2017', 'licence': 'public domain', 'colour': '#c9a227', 'url': 'https://www.gutenberg.org/ebooks/2017'},
-  'tao':      {'name': 'Tao Te Ching', 'lang': 'English', 'translation': 'Legge, 1891', 'source': 'Project Gutenberg #216', 'licence': 'public domain', 'colour': '#7fc4a4', 'url': 'https://www.gutenberg.org/ebooks/216'},
-  'analects': {'name': 'Analects', 'lang': 'English', 'translation': 'Legge, 1861', 'source': 'Project Gutenberg #4094', 'licence': 'public domain', 'colour': '#5faa8f', 'url': 'https://www.gutenberg.org/ebooks/4094'},
+  'torah':    {'name': 'Hebrew Bible', 'lang': 'English', 'translation': 'King James Version, 1611', 'source': 'Project Gutenberg #10', 'licence': 'public domain', 'colour': '#6f7fd0', 'url': 'https://www.gutenberg.org/ebooks/10', 'symbol': '✡'},
+  'gospels':  {'name': 'Gospels', 'lang': 'English', 'translation': 'King James Version, 1611', 'source': 'Project Gutenberg #10', 'licence': 'public domain', 'colour': '#b85c7a', 'url': 'https://www.gutenberg.org/ebooks/10', 'symbol': '✝'},
+  'quran':    {'name': 'Quran', 'lang': 'English', 'translation': 'Pickthall, 1930', 'source': 'Tanzil.net', 'licence': 'free with attribution', 'colour': '#3fa7a0', 'url': 'https://tanzil.net/trans/en.pickthall', 'symbol': '☪'},
+  'gita':     {'name': 'Bhagavad Gita', 'lang': 'English', 'translation': 'Arnold, The Song Celestial, 1885', 'source': 'Project Gutenberg #2388', 'licence': 'public domain', 'colour': '#e0993a', 'url': 'https://www.gutenberg.org/ebooks/2388', 'symbol': 'ॐ'},
+  'dhamma':   {'name': 'Dhammapada', 'lang': 'English', 'translation': 'Müller, 1881', 'source': 'Project Gutenberg #2017', 'licence': 'public domain', 'colour': '#c9a227', 'url': 'https://www.gutenberg.org/ebooks/2017', 'symbol': '☸'},
+  'tao':      {'name': 'Tao Te Ching', 'lang': 'English', 'translation': 'Legge, 1891', 'source': 'Project Gutenberg #216', 'licence': 'public domain', 'colour': '#7fc4a4', 'url': 'https://www.gutenberg.org/ebooks/216', 'symbol': '☯'},
+  'analects': {'name': 'Analects', 'lang': 'English', 'translation': 'Legge, 1861', 'source': 'Project Gutenberg #4094', 'licence': 'public domain', 'colour': '#5faa8f', 'url': 'https://www.gutenberg.org/ebooks/4094', 'symbol': '儒'},
 }
 verses = []  # [text id, reference, words, original language text where the edition has it]
 book_of = {}  # verse index -> the book, sura or chapter it belongs to, where the reference alone does not say

@@ -13,7 +13,7 @@ test('the corpus has every text, and each verse names its text and a reference',
   const count = (t) => corpus.verses.filter(v => v[0] === t).length;
   assert.equal(count('torah'), 23145); assert.equal(count('gospels'), 3779); assert.equal(count('quran'), 6236);
   assert.ok(count('analects') > 450 && count('dhamma') > 400 && count('tao') > 200 && count('gita') > 230);
-  for (const t of Object.values(corpus.texts)) assert.ok(t.translation && t.source && t.licence && t.colour);
+  for (const t of Object.values(corpus.texts)) assert.ok(t.translation && t.source && t.licence && t.colour && t.symbol);
 });
 
 test('each text lists its books in reading order, and they account for every verse', () => {
