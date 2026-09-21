@@ -46,7 +46,7 @@ export class ThreadsLayer {
       fragmentShader: `uniform vec3 uColor; void main() { float d = length(gl_PointCoord - 0.5) * 2.0; if (d > 1.0) discard; float core = 1.0 - smoothstep(0.0, 0.25, d); float glow = pow(1.0 - d, 2.0) * 0.7; gl_FragColor = vec4(mix(uColor, vec3(1.0), core), core + glow); }`,
     });
     this.spark = new THREE.Points(sg, this.sparkMaterial); this.spark.frustumCulled = false; this.spark.visible = false; this.spark.renderOrder = 6; this.group.add(this.spark);
-    this.travelPoint = new THREE.Vector3(); this.travelAt = null; this.p = new THREE.Vector3();
+    this.travelPoint = new THREE.Vector3(); this.travelAt = null; this.p = new THREE.Vector3(); this.focusAt = new THREE.Vector3(); this.focusColour = new THREE.Color(); this.hasFocus = false;
     this.a = new THREE.Vector3(); this.b = new THREE.Vector3(); this.c = new THREE.Color();
     this.buf = new Float32Array(MAX * SEG * 2 * 3); this.cbuf = new Float32Array(MAX * SEG * 2 * 3);
     // the walk: a dim gold line through the verses stepped so far, drawn apart from the threads so it stays when they change
@@ -93,7 +93,7 @@ export class ThreadsLayer {
     positionOf(i, this.a); this.c.set(colour);
     mp.setXYZ(0, this.a.x, this.a.y + 0.01, this.a.z); mc.setXYZ(0, this.c.r, this.c.g, this.c.b); mb.setX(0, 1);
     let k = 0, n = 0, m = 1;
-    this.travelAt = null;
+    this.travelAt = null; this.hasFocus = false;
     for (let j = 0; j < kin.length; j++) {
       if (kin[j] < 0) continue;
       const tp = Math.min(1, Math.max(0, progress * 1.3 - (n++) * 0.05)), reach = 1 - Math.pow(1 - tp, 3);
@@ -101,7 +101,9 @@ export class ThreadsLayer {
       // a hovered thread stands out; the others step back. A travelling light lifts the whole of its thread.
       const dimmed = focus >= 0 && j !== focus, lit = j === focus || (travel && travel.j === j);
       const shade = dimmed ? 0.3 : 1, boost = lit ? 1.35 : 1;
-      if (reach >= 0.999) { mp.setXYZ(m, this.b.x, this.b.y + 0.01, this.b.z); mc.setXYZ(m, this.c.r * shade * boost, this.c.g * shade * boost, this.c.b * shade * boost); mb.setX(m, lit ? 1 : 0); m++; }
+      // the kin under the pointer gets the big mark and a ring of its own, so the eye finds it on the ground
+      if (reach >= 0.999) { mp.setXYZ(m, this.b.x, this.b.y + 0.01, this.b.z); mc.setXYZ(m, this.c.r * shade * boost, this.c.g * shade * boost, this.c.b * shade * boost); mb.setX(m, lit ? 1.6 : 0); m++; }
+      if (j === focus && !travel) { this.focusAt.copy(this.b); this.focusColour.set(colours[j]); this.hasFocus = true; }
       if (travel && travel.j === j) { this.along(this.a, this.b, travel.e, n, this.travelPoint); this.travelAt = this.travelPoint; } // n as the thread below uses it
       if (reach <= 0) continue;
       this.c.multiplyScalar(shade * boost);
@@ -122,7 +124,11 @@ export class ThreadsLayer {
     this.markMaterial.uniforms.uOpacity.value = 1 - Math.min(1, recede / 0.1); this.marks.visible = recede < 0.1;
     const pt = t / 0.3;
     if (pt < 1) { this.pulse.geometry.getAttribute('position').setXYZ(0, this.a.x, this.a.y + 0.01, this.a.z); this.pulse.geometry.getAttribute('position').needsUpdate = true; this.pulseMaterial.uniforms.uT.value = pt; this.pulseMaterial.uniforms.uColor.value.set(colour); }
-    this.pulse.visible = pt < 1;
+    // a ring breathes on the focused kin; the pick ring on the verse itself takes precedence while it runs
+    if (pt >= 1 && this.hasFocus) {
+      const pp = this.pulse.geometry.getAttribute('position'); pp.setXYZ(0, this.focusAt.x, this.focusAt.y + 0.01, this.focusAt.z); pp.needsUpdate = true;
+      this.pulseMaterial.uniforms.uT.value = 0.35 + 0.15 * Math.sin(t * 5.0); this.pulseMaterial.uniforms.uColor.value.copy(this.focusColour); this.pulse.visible = true;
+    } else this.pulse.visible = pt < 1;
     // the travelling light: a bright spark that runs along one thread
     if (this.travelAt) { const sp = this.spark.geometry.getAttribute('position'); sp.setXYZ(0, this.travelAt.x, this.travelAt.y + 0.012, this.travelAt.z); sp.needsUpdate = true; this.sparkMaterial.uniforms.uColor.value.set(colours[travel.j]); this.spark.visible = true; }
     else this.spark.visible = false;
